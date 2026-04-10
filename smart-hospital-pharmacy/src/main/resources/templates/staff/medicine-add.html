@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/><title>Add Medicine - Staff Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: staff-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: staff-header('Add Medicine')}"></th:block>
+<main class="main-content"><div class="content-area">
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show"><i class="fa fa-check-circle me-2"></i><span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show"><i class="fa fa-exclamation-circle me-2"></i><span th:text="${error}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+
+    <div class="page-header">
+        <h2><i class="fa fa-plus-circle me-2" style="color:var(--secondary);"></i>Add New Medicine</h2>
+        <p>Register a new medicine in the pharmacy inventory</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="table-card p-4">
+                <form th:action="@{/staff/medicines/add}" method="post" enctype="multipart/form-data">
+
+                    <div class="d-flex gap-2 mb-4">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="startBarcodeScanner()">
+                            <i class="fa fa-barcode me-1"></i>Scan Barcode
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="voiceBtn" onclick="toggleVoiceInput()">
+                            <i class="fa fa-microphone me-1"></i>Voice Input
+                        </button>
+                        <span id="voiceStatus" class="text-muted align-self-center" style="font-size:12px;"></span>
+                    </div>
+
+                    <div id="barcodeArea" class="mb-4" style="display:none;">
+                        <div class="alert alert-info"><i class="fa fa-info-circle me-2"></i>Position barcode in front of camera.</div>
+                        <video id="barcodeVideo" style="width:100%;border-radius:10px;max-height:200px;background:#000;"></video>
+                        <div class="d-flex gap-2 mt-2">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="captureBarcode()"><i class="fa fa-camera me-1"></i>Capture</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="stopBarcode()"><i class="fa fa-stop me-1"></i>Stop</button>
+                        </div>
+                        <div id="barcodeResult" class="mt-2 text-success fw-bold"></div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="productName" id="productName" required placeholder="e.g. Amoxicillin 250mg"/>
+                                <button type="button" class="btn btn-outline-secondary" onclick="voiceFillField('productName')" title="Voice input"><i class="fa fa-microphone"></i></button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">SKU ID <small class="text-muted">(auto-generated if blank)</small></label>
+                            <input type="text" class="form-control" name="skuId" id="skuId" placeholder="e.g. MED-AMO-XXXXXXXX"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Stock Quantity <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="stockQuantity" min="0" required placeholder="0"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Expiry Date</label>
+                            <input type="date" class="form-control" name="expiryDate"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Product Image</label>
+                            <input type="file" class="form-control" name="imageFile" accept="image/*" onchange="previewImage(this)"/>
+                        </div>
+                        <div class="col-12" id="imagePreviewContainer" style="display:none;">
+                            <img id="imagePreview" src="" style="max-height:120px;border-radius:10px;border:2px solid #e8ecf0;"/>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary px-5"><i class="fa fa-save me-2"></i>Add Medicine</button>
+                            <a th:href="@{/staff/medicines}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="table-card p-4">
+                <h6 style="font-weight:700;color:var(--primary);margin-bottom:12px;"><i class="fa fa-lightbulb me-2"></i>Tips</h6>
+                <ul style="font-size:13px;color:#666;line-height:2;padding-left:16px;">
+                    <li>SKU auto-generated from product name</li>
+                    <li>Scan barcode to auto-fill details</li>
+                    <li>Use voice input for hands-free entry</li>
+                    <li>Images: JPG, PNG, WEBP supported</li>
+                    <li>Set expiry date for timely alerts</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div></main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script>
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => { document.getElementById('imagePreview').src = e.target.result; document.getElementById('imagePreviewContainer').style.display='block'; };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+let barcodeStream = null;
+function startBarcodeScanner() {
+    document.getElementById('barcodeArea').style.display = 'block';
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(s => { barcodeStream = s; document.getElementById('barcodeVideo').srcObject = s; document.getElementById('barcodeVideo').play(); }).catch(e => { alert('Camera not available: ' + e.message); document.getElementById('barcodeArea').style.display='none'; });
+}
+function captureBarcode() { document.getElementById('barcodeResult').textContent = 'Barcode captured! Enter details manually or use ZXing library for full decode.'; stopBarcode(); }
+function stopBarcode() { if(barcodeStream){barcodeStream.getTracks().forEach(t=>t.stop());barcodeStream=null;} document.getElementById('barcodeArea').style.display='none'; }
+let recognition=null, isListening=false, targetField=null;
+function toggleVoiceInput() {
+    if (!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)) { alert('Speech recognition not supported. Use Chrome or Edge.'); return; }
+    if(isListening){recognition.stop();return;}
+    recognition = new (window.SpeechRecognition||window.webkitSpeechRecognition)();
+    recognition.lang='en-IN'; recognition.continuous=false; recognition.interimResults=false;
+    recognition.onstart=()=>{isListening=true;document.getElementById('voiceStatus').textContent='🎙️ Listening...';document.getElementById('voiceBtn').style.background='#e74c3c';document.getElementById('voiceBtn').style.color='white';};
+    recognition.onresult=e=>{const t=e.results[0][0].transcript;if(targetField){document.getElementById(targetField).value=t;targetField=null;}else{document.getElementById('productName').value=t;}document.getElementById('voiceStatus').textContent='✅ '+t;};
+    recognition.onerror=()=>{document.getElementById('voiceStatus').textContent='❌ Error. Try again.';};
+    recognition.onend=()=>{isListening=false;document.getElementById('voiceBtn').style.background='';document.getElementById('voiceBtn').style.color='';setTimeout(()=>document.getElementById('voiceStatus').textContent='',3000);};
+    recognition.start();
+}
+function voiceFillField(id){targetField=id;toggleVoiceInput();}
+setTimeout(()=>{document.querySelectorAll('.alert').forEach(a=>{a.style.transition='opacity 0.5s';a.style.opacity='0';setTimeout(()=>a.remove(),500);});},4000);
+</script>
+</body>
+</html>

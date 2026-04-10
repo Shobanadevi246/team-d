@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/><title>Storage Monitor - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+    <style>
+        .zone-card{border-radius:16px;padding:20px;border:2px solid transparent;position:relative;overflow:hidden;}
+        .zone-cold{background:linear-gradient(135deg,#e8f4fd,#d0e9f7);border-color:#3498db;}
+        .zone-room{background:linear-gradient(135deg,#eafaf1,#d5f5e3);border-color:#27ae60;}
+        .zone-controlled{background:linear-gradient(135deg,#fef9e7,#fdebd0);border-color:#f39c12;}
+        .zone-flammable{background:linear-gradient(135deg,#fdedec,#fad7d5);border-color:#e74c3c;}
+        .gauge-wrap{position:relative;width:100px;height:60px;overflow:hidden;margin:0 auto 8px;}
+        .gauge-bg{width:100px;height:50px;border-radius:50px 50px 0 0;background:#e0e0e0;}
+        .gauge-fill{position:absolute;bottom:0;left:0;height:50px;width:100px;border-radius:50px 50px 0 0;transform-origin:50% 100%;transition:transform 1s ease;}
+        .status-OPTIMAL{color:#27ae60;font-weight:700;}
+        .status-WARNING{color:#f39c12;font-weight:700;}
+        .status-CRITICAL{color:#e74c3c;font-weight:700;}
+        .status-BREACH{color:#800000;font-weight:700;}
+        .temp-display{font-size:24px;font-weight:800;color:var(--primary);}
+        .log-row-OPTIMAL{background:rgba(39,174,96,0.04);}
+        .log-row-WARNING{background:rgba(243,156,18,0.06);}
+        .log-row-CRITICAL{background:rgba(231,76,60,0.08);}
+        .log-row-BREACH{background:rgba(128,0,0,0.08);}
+    </style>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Storage Temperature Monitor')}"></th:block>
+<main class="main-content"><div class="content-area">
+
+    <div class="page-header d-flex align-items-center justify-content-between">
+        <div>
+            <h2><i class="fa fa-thermometer-half me-2" style="color:#00bcd4;"></i>Storage Temperature &amp; Humidity Monitor</h2>
+            <p>Track and log medicine storage conditions across all pharmacy zones</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#logModal">
+            <i class="fa fa-plus me-2"></i>Log Reading
+        </button>
+    </div>
+
+    <!-- Zone Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="zone-card zone-cold">
+                <div class="d-flex align-items-center gap-2 mb-2"><i class="fa fa-snowflake" style="color:#3498db;font-size:20px;"></i><span style="font-weight:700;font-size:13px;">Cold Storage</span></div>
+                <div th:if="${zoneSummary != null and zoneSummary.containsKey('COLD_STORAGE')}">
+                    <div class="temp-display" th:text="${zoneSummary.get('COLD_STORAGE').get('temp')} + '°C'">--</div>
+                    <div style="font-size:12px;color:#888;" th:text="'Humidity: ' + ${zoneSummary.get('COLD_STORAGE').get('humidity')} + '%'"></div>
+                    <div class="mt-1" th:class="'status-' + ${zoneSummary.get('COLD_STORAGE').get('status')}" style="font-size:12px;" th:text="${zoneSummary.get('COLD_STORAGE').get('status')}"></div>
+                </div>
+                <div th:if="${zoneSummary == null or !zoneSummary.containsKey('COLD_STORAGE')}" class="text-muted" style="font-size:12px;">No data logged</div>
+                <div style="font-size:10px;color:#888;margin-top:4px;">Target: 2–8°C</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="zone-card zone-room">
+                <div class="d-flex align-items-center gap-2 mb-2"><i class="fa fa-home" style="color:#27ae60;font-size:20px;"></i><span style="font-weight:700;font-size:13px;">Room Temp</span></div>
+                <div th:if="${zoneSummary != null and zoneSummary.containsKey('ROOM_TEMP')}">
+                    <div class="temp-display" th:text="${zoneSummary.get('ROOM_TEMP').get('temp')} + '°C'">--</div>
+                    <div style="font-size:12px;color:#888;" th:text="'Humidity: ' + ${zoneSummary.get('ROOM_TEMP').get('humidity')} + '%'"></div>
+                    <div class="mt-1" th:class="'status-' + ${zoneSummary.get('ROOM_TEMP').get('status')}" style="font-size:12px;" th:text="${zoneSummary.get('ROOM_TEMP').get('status')}"></div>
+                </div>
+                <div th:if="${zoneSummary == null or !zoneSummary.containsKey('ROOM_TEMP')}" class="text-muted" style="font-size:12px;">No data logged</div>
+                <div style="font-size:10px;color:#888;margin-top:4px;">Target: 15–25°C</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="zone-card zone-controlled">
+                <div class="d-flex align-items-center gap-2 mb-2"><i class="fa fa-lock" style="color:#f39c12;font-size:20px;"></i><span style="font-weight:700;font-size:13px;">Controlled</span></div>
+                <div th:if="${zoneSummary != null and zoneSummary.containsKey('CONTROLLED_SUBSTANCE')}">
+                    <div class="temp-display" th:text="${zoneSummary.get('CONTROLLED_SUBSTANCE').get('temp')} + '°C'">--</div>
+                    <div style="font-size:12px;color:#888;" th:text="'Humidity: ' + ${zoneSummary.get('CONTROLLED_SUBSTANCE').get('humidity')} + '%'"></div>
+                    <div class="mt-1" th:class="'status-' + ${zoneSummary.get('CONTROLLED_SUBSTANCE').get('status')}" style="font-size:12px;" th:text="${zoneSummary.get('CONTROLLED_SUBSTANCE').get('status')}"></div>
+                </div>
+                <div th:if="${zoneSummary == null or !zoneSummary.containsKey('CONTROLLED_SUBSTANCE')}" class="text-muted" style="font-size:12px;">No data logged</div>
+                <div style="font-size:10px;color:#888;margin-top:4px;">Target: 15–25°C</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="zone-card zone-flammable">
+                <div class="d-flex align-items-center gap-2 mb-2"><i class="fa fa-fire" style="color:#e74c3c;font-size:20px;"></i><span style="font-weight:700;font-size:13px;">Flammable</span></div>
+                <div th:if="${zoneSummary != null and zoneSummary.containsKey('FLAMMABLE')}">
+                    <div class="temp-display" th:text="${zoneSummary.get('FLAMMABLE').get('temp')} + '°C'">--</div>
+                    <div style="font-size:12px;color:#888;" th:text="'Humidity: ' + ${zoneSummary.get('FLAMMABLE').get('humidity')} + '%'"></div>
+                    <div class="mt-1" th:class="'status-' + ${zoneSummary.get('FLAMMABLE').get('status')}" style="font-size:12px;" th:text="${zoneSummary.get('FLAMMABLE').get('status')}"></div>
+                </div>
+                <div th:if="${zoneSummary == null or !zoneSummary.containsKey('FLAMMABLE')}" class="text-muted" style="font-size:12px;">No data logged</div>
+                <div style="font-size:10px;color:#888;margin-top:4px;">Keep &lt; 20°C</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Critical Alerts -->
+    <div th:if="${criticalLogs != null and !criticalLogs.isEmpty()}" class="alert alert-danger mb-4">
+        <i class="fa fa-exclamation-triangle me-2"></i>
+        <strong th:text="${criticalLogs.size()} + ' critical storage condition(s) detected!'"></strong> Immediate action required.
+    </div>
+
+    <!-- Log History -->
+    <div class="table-card">
+        <div class="table-header">
+            <div class="table-title"><i class="fa fa-history me-2"></i>Storage Log History</div>
+            <span class="badge-info" th:text="${recentLogs?.size() ?: 0} + ' entries'"></span>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>#</th><th>Medicine</th><th>Zone</th><th>Temp (°C)</th><th>Humidity (%)</th><th>Status</th><th>Logged By</th><th>Notes</th><th>Date</th></tr></thead>
+                <tbody>
+                <tr th:if="${recentLogs == null or recentLogs.isEmpty()}">
+                    <td colspan="9" class="text-center py-5 text-muted"><i class="fa fa-thermometer-half fa-2x mb-2 d-block" style="opacity:0.3;"></i>No storage logs yet. Log the first reading.</td>
+                </tr>
+                <tr th:each="log, i : ${recentLogs}" th:class="'log-row-' + ${log.status.name()}">
+                    <td th:text="${i.count}"></td>
+                    <td class="fw-600" th:text="${log.medicine?.productName ?: 'General'}"></td>
+                    <td><span class="badge-info" style="font-size:10px;" th:text="${log.storageZone?.replace('_',' ')}"></span></td>
+                    <td>
+                        <span th:if="${log.temperatureCelsius != null}"
+                              th:text="${log.temperatureCelsius} + '°C'"
+                              th:style="${log.status.name() == 'CRITICAL' or log.status.name() == 'BREACH'} ? 'color:#e74c3c;font-weight:700;' : 'color:var(--text);'"></span>
+                    </td>
+                    <td th:text="${log.humidityPercent != null ? log.humidityPercent + '%' : '-'}"></td>
+                    <td>
+                        <span th:class="'status-' + ${log.status.name()}" style="font-size:12px;" th:text="${log.status.name()}"></span>
+                    </td>
+                    <td th:text="${log.loggedBy}"></td>
+                    <td th:text="${log.notes ?: '-'}" style="font-size:12px;max-width:120px;white-space:normal;"></td>
+                    <td style="font-size:12px;" th:text="${log.loggedAt != null ? #temporals.format(log.loggedAt,'dd MMM HH:mm') : 'N/A'}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div></main>
+
+<!-- Log Reading Modal -->
+<div class="modal fade" id="logModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border:none;border-radius:16px;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#00bcd4,#1a3a5c);color:white;border-radius:16px 16px 0 0;">
+                <h5 class="modal-title"><i class="fa fa-thermometer-half me-2"></i>Log Storage Reading</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" style="background:var(--card-bg);">
+                <form th:action="@{/admin/storage-monitor/log}" method="post">
+                    <div class="mb-3"><label class="form-label">Medicine (optional)</label>
+                        <select class="form-select" name="medicineId">
+                            <option value="1">-- General Zone Reading --</option>
+                            <option th:each="med : ${medicines}" th:value="${med.id}" th:text="${med.productName}"></option>
+                        </select></div>
+                    <div class="mb-3"><label class="form-label">Storage Zone *</label>
+                        <select class="form-select" name="zone" required>
+                            <option value="COLD_STORAGE">❄️ Cold Storage (2–8°C)</option>
+                            <option value="ROOM_TEMP">🏠 Room Temperature (15–25°C)</option>
+                            <option value="CONTROLLED_SUBSTANCE">🔒 Controlled Substance</option>
+                            <option value="FLAMMABLE">🔥 Flammable Storage</option>
+                        </select></div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6"><label class="form-label">Temperature (°C) *</label>
+                            <input type="number" step="0.1" class="form-control" name="temperature" required placeholder="e.g. 4.5"/></div>
+                        <div class="col-6"><label class="form-label">Humidity (%) *</label>
+                            <input type="number" step="0.1" min="0" max="100" class="form-control" name="humidity" required placeholder="e.g. 45"/></div>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Notes</label>
+                        <input type="text" class="form-control" name="notes" placeholder="Any observations..."/></div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4"><i class="fa fa-save me-2"></i>Log Reading</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+<script>initSearch('/admin/search');</script>
+</body>
+</html>

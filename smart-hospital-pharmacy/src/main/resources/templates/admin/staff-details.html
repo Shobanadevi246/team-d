@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/><title>Staff Details - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Staff Details')}"></th:block>
+<main class="main-content"><div class="content-area">
+
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a th:href="@{/admin/staff}" class="btn btn-outline-primary btn-sm"><i class="fa fa-arrow-left me-1"></i>Back</a>
+        <h2 class="mb-0" style="font-size:20px;font-weight:800;color:var(--primary);">Staff Member Details</h2>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger"><span th:text="${error}"></span></div>
+
+    <div th:if="${staff != null}">
+        <!-- Profile Card -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="table-card p-4 text-center">
+                    <div class="stat-icon mx-auto mb-3" style="width:80px;height:80px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-size:32px;border-radius:20px;">
+                        <i class="fa fa-user"></i>
+                    </div>
+                    <h4 th:text="${staff.staffName}" style="font-weight:800;color:var(--primary);"></h4>
+                    <p th:text="${staff.staffId}" class="text-muted mb-2"></p>
+                    <span th:if="${!staff.locked}" class="badge-success">Active</span>
+                    <span th:if="${staff.locked}" class="badge-danger">Locked</span>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="table-card p-4">
+                    <h6 style="font-weight:700;color:var(--primary);margin-bottom:16px;">Contact & Shop Information</h6>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;">Email</label>
+                            <div class="fw-600" th:text="${staff.email}"></div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;">Staff ID</label>
+                            <div class="fw-600" th:text="${staff.staffId}"></div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;">Shop Number</label>
+                            <div class="fw-600" th:text="${staff.shopNumber}"></div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;">Shop Block</label>
+                            <div class="fw-600" th:text="${staff.shopBlockName}"></div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;">Registered On</label>
+                            <div class="fw-600" th:text="${staff.createdAt != null ? #temporals.format(staff.createdAt, 'dd MMM yyyy') : 'N/A'}"></div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;">Failed Login Attempts</label>
+                            <div>
+                                <span th:if="${staff.failedLoginAttempts == 0}" class="badge-success" th:text="${staff.failedLoginAttempts}"></span>
+                                <span th:if="${staff.failedLoginAttempts > 0 and staff.failedLoginAttempts < 3}" class="badge-warning" th:text="${staff.failedLoginAttempts}"></span>
+                                <span th:if="${staff.failedLoginAttempts >= 3}" class="badge-danger" th:text="${staff.failedLoginAttempts}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Staff Medicines -->
+        <div class="table-card mb-4">
+            <div class="table-header">
+                <div class="table-title"><i class="fa fa-pills me-2"></i>Medicines Added by This Staff</div>
+                <span class="badge-info" th:text="${staffMedicines?.size() + ' medicines'}">0</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>#</th><th>Product</th><th>SKU</th><th>Stock</th><th>Expiry</th><th>Added On</th></tr></thead>
+                    <tbody>
+                    <tr th:if="${staffMedicines == null or staffMedicines.isEmpty()}">
+                        <td colspan="6" class="text-center py-4 text-muted">No medicines added by this staff member.</td>
+                    </tr>
+                    <tr th:each="med, i : ${staffMedicines}">
+                        <td th:text="${i.count}"></td>
+                        <td th:text="${med.productName}" class="fw-600"></td>
+                        <td><code th:text="${med.skuId}"></code></td>
+                        <td>
+                            <span th:if="${med.stockQuantity < 10}" class="badge-danger" th:text="${med.stockQuantity} + ' units'"></span>
+                            <span th:if="${med.stockQuantity >= 10}" class="badge-success" th:text="${med.stockQuantity} + ' units'"></span>
+                        </td>
+                        <td th:text="${med.expiryDate != null ? #temporals.format(med.expiryDate, 'dd MMM yyyy') : 'N/A'}"></td>
+                        <td th:text="${med.createdAt != null ? #temporals.format(med.createdAt, 'dd MMM yyyy') : 'N/A'}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Staff Transactions -->
+        <div class="table-card">
+            <div class="table-header">
+                <div class="table-title"><i class="fa fa-exchange-alt me-2"></i>Stock Transactions by This Staff</div>
+                <span class="badge-info" th:text="${staffTransactions?.size() + ' transactions'}">0</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>#</th><th>Medicine</th><th>Type</th><th>Qty</th><th>Expiry Updated</th><th>Notes</th><th>Date</th></tr></thead>
+                    <tbody>
+                    <tr th:if="${staffTransactions == null or staffTransactions.isEmpty()}">
+                        <td colspan="7" class="text-center py-4 text-muted">No transactions by this staff member.</td>
+                    </tr>
+                    <tr th:each="tx, i : ${staffTransactions}">
+                        <td th:text="${i.count}"></td>
+                        <td th:text="${tx.medicine?.productName}"></td>
+                        <td>
+                            <span th:if="${tx.transactionType.name() == 'STOCK_IN'}" class="badge-success"><i class="fa fa-arrow-down me-1"></i>IN</span>
+                            <span th:if="${tx.transactionType.name() == 'STOCK_OUT'}" class="badge-danger"><i class="fa fa-arrow-up me-1"></i>OUT</span>
+                        </td>
+                        <td th:text="${tx.quantity}"></td>
+                        <td th:text="${tx.expiryDateUpdated != null ? #temporals.format(tx.expiryDateUpdated, 'dd MMM yyyy') : '-'}"></td>
+                        <td th:text="${tx.notes ?: '-'}"></td>
+                        <td th:text="${tx.transactionDate != null ? #temporals.format(tx.transactionDate, 'dd MMM yyyy HH:mm') : 'N/A'}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div></main>
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+</body>
+</html>

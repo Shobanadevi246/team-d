@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/><title>Add Medicine - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Add Medicine')}"></th:block>
+<main class="main-content"><div class="content-area">
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show"><i class="fa fa-check-circle me-2"></i><span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show"><i class="fa fa-exclamation-circle me-2"></i><span th:text="${error}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+
+    <div class="page-header">
+        <h2><i class="fa fa-plus-circle me-2" style="color:var(--secondary);"></i>Add New Medicine</h2>
+        <p>Register a new medicine/product in the pharmacy system</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="table-card p-4">
+                <form th:action="@{/admin/medicines/add}" method="post" enctype="multipart/form-data">
+
+                    <!-- Special Input Tools -->
+                    <div class="d-flex gap-2 mb-4">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="startBarcodeScanner()">
+                            <i class="fa fa-barcode me-1"></i>Scan Barcode
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="voiceBtn" onclick="toggleVoiceInput()">
+                            <i class="fa fa-microphone me-1"></i>Voice Input
+                        </button>
+                        <span id="voiceStatus" class="text-muted align-self-center" style="font-size:12px;"></span>
+                    </div>
+
+                    <!-- Barcode Scanner Area -->
+                    <div id="barcodeArea" class="mb-4" style="display:none;">
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle me-2"></i>
+                            Position barcode in front of camera. The product name field will auto-fill.
+                        </div>
+                        <video id="barcodeVideo" style="width:100%;border-radius:10px;max-height:200px;background:#000;"></video>
+                        <div class="d-flex gap-2 mt-2">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="captureBarcode()"><i class="fa fa-camera me-1"></i>Capture</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="stopBarcode()"><i class="fa fa-stop me-1"></i>Stop</button>
+                        </div>
+                        <div id="barcodeResult" class="mt-2 text-success fw-bold"></div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="productName" id="productName" required placeholder="e.g. Paracetamol 500mg"/>
+                                <button type="button" class="btn btn-outline-secondary" onclick="voiceFillField('productName')" title="Voice fill this field">
+                                    <i class="fa fa-microphone"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">SKU ID <small class="text-muted">(leave blank for auto-generate)</small></label>
+                            <input type="text" class="form-control" name="skuId" id="skuId" placeholder="e.g. MED-PAR-AB12CD34"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Stock Quantity <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="stockQuantity" min="0" required placeholder="0"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Expiry Date</label>
+                            <input type="date" class="form-control" name="expiryDate"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Product Image</label>
+                            <input type="file" class="form-control" name="imageFile" accept="image/*" onchange="previewImage(this)"/>
+                        </div>
+                        <div class="col-12" id="imagePreviewContainer" style="display:none;">
+                            <img id="imagePreview" src="" style="max-height:120px;border-radius:10px;border:2px solid #e8ecf0;"/>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary px-5">
+                                <i class="fa fa-save me-2"></i>Add Medicine
+                            </button>
+                            <a th:href="@{/admin/medicines}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="table-card p-4">
+                <h6 style="font-weight:700;color:var(--primary);margin-bottom:12px;"><i class="fa fa-lightbulb me-2"></i>Tips</h6>
+                <ul style="font-size:13px;color:#666;line-height:2;padding-left:16px;">
+                    <li>SKU is auto-generated from product name if left blank</li>
+                    <li>Use barcode scanner to fill product details automatically</li>
+                    <li>Use voice input to fill product name hands-free</li>
+                    <li>Supported image formats: JPG, PNG, WEBP</li>
+                    <li>Set expiry date to receive timely alerts</li>
+                </ul>
+                <hr/>
+                <h6 style="font-weight:700;color:var(--primary);margin-bottom:12px;"><i class="fa fa-microphone me-2"></i>Voice Commands</h6>
+                <div style="font-size:12px;color:#888;">
+                    <p>Say the medicine name clearly and click the microphone button. Supported in Chrome & Edge browsers.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div></main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script>
+// Image Preview
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('imagePreview').src = e.target.result;
+            document.getElementById('imagePreviewContainer').style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Barcode Scanner
+let barcodeStream = null;
+function startBarcodeScanner() {
+    const area = document.getElementById('barcodeArea');
+    area.style.display = 'block';
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+            barcodeStream = stream;
+            document.getElementById('barcodeVideo').srcObject = stream;
+            document.getElementById('barcodeVideo').play();
+        })
+        .catch(err => {
+            alert('Camera access denied or not available: ' + err.message);
+            area.style.display = 'none';
+        });
+}
+function captureBarcode() {
+    const video = document.getElementById('barcodeVideo');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    // Simulate barcode reading (in production, use a JS barcode library like ZXing)
+    document.getElementById('barcodeResult').textContent = 'Barcode captured! Please enter product details manually or integrate ZXing library for full decode.';
+    stopBarcode();
+}
+function stopBarcode() {
+    if (barcodeStream) {
+        barcodeStream.getTracks().forEach(t => t.stop());
+        barcodeStream = null;
+    }
+    document.getElementById('barcodeArea').style.display = 'none';
+}
+
+// Voice Input
+let recognition = null;
+let isListening = false;
+let targetField = null;
+
+function toggleVoiceInput() {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        alert('Speech recognition not supported. Please use Chrome or Edge.');
+        return;
+    }
+    if (isListening) {
+        recognition.stop();
+        return;
+    }
+    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-IN';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onstart = () => {
+        isListening = true;
+        document.getElementById('voiceStatus').textContent = '🎙️ Listening...';
+        document.getElementById('voiceBtn').classList.add('btn-danger');
+        document.getElementById('voiceBtn').classList.remove('btn-outline-primary');
+    };
+    recognition.onresult = e => {
+        const text = e.results[0][0].transcript;
+        if (targetField) {
+            document.getElementById(targetField).value = text;
+            targetField = null;
+        } else {
+            document.getElementById('productName').value = text;
+        }
+        document.getElementById('voiceStatus').textContent = '✅ Captured: ' + text;
+    };
+    recognition.onerror = () => {
+        document.getElementById('voiceStatus').textContent = '❌ Error. Try again.';
+    };
+    recognition.onend = () => {
+        isListening = false;
+        document.getElementById('voiceBtn').classList.remove('btn-danger');
+        document.getElementById('voiceBtn').classList.add('btn-outline-primary');
+        setTimeout(() => document.getElementById('voiceStatus').textContent = '', 3000);
+    };
+    recognition.start();
+}
+
+function voiceFillField(fieldId) {
+    targetField = fieldId;
+    toggleVoiceInput();
+}
+
+setTimeout(()=>{document.querySelectorAll('.alert').forEach(a=>{a.style.transition='opacity 0.5s';a.style.opacity='0';setTimeout(()=>a.remove(),500);});},4000);
+</script>
+</body>
+</html>

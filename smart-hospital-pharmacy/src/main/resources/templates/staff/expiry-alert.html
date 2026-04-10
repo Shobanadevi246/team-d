@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/><title>Expiry Alert - Staff Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: staff-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: staff-header('Expiry Alert')}"></th:block>
+<main class="main-content"><div class="content-area">
+    <div class="page-header"><h2><i class="fa fa-calendar-times me-2" style="color:#f39c12;"></i>Expiry Medicine Alert</h2><p>Medicines expiring within 10 days</p></div>
+    <div class="table-card mb-4">
+        <div class="table-header"><div class="table-title" style="color:#f39c12;"><i class="fa fa-clock me-2"></i>Expiring Within 10 Days</div><span class="badge-warning" th:text="${expiringMedicines?.size() ?: 0} + ' medicines'"></span></div>
+        <div class="table-responsive"><table class="table">
+            <thead><tr><th>#</th><th>Product</th><th>SKU</th><th>Stock</th><th>Expiry Date</th></tr></thead>
+            <tbody>
+            <tr th:if="${expiringMedicines == null or expiringMedicines.isEmpty()}"><td colspan="5" class="text-center py-4"><i class="fa fa-check-circle text-success me-2"></i>No medicines expiring soon!</td></tr>
+            <tr th:each="med, i : ${expiringMedicines}" style="background:rgba(243,156,18,0.03);">
+                <td th:text="${i.count}"></td><td class="fw-600" th:text="${med.productName}"></td>
+                <td><code th:text="${med.skuId}"></code></td><td th:text="${med.stockQuantity} + ' units'"></td>
+                <td><span class="badge-warning" th:text="${med.expiryDate != null ? #temporals.format(med.expiryDate, 'dd MMM yyyy') : 'N/A'}"></span></td>
+            </tr>
+            </tbody>
+        </table></div>
+    </div>
+    <div class="table-card">
+        <div class="table-header"><div class="table-title" style="color:#e74c3c;"><i class="fa fa-times-circle me-2"></i>Already Expired</div><span class="badge-danger" th:text="${expiredMedicines?.size() ?: 0} + ' medicines'"></span></div>
+        <div class="table-responsive"><table class="table">
+            <thead><tr><th>#</th><th>Product</th><th>SKU</th><th>Stock</th><th>Expired On</th></tr></thead>
+            <tbody>
+            <tr th:if="${expiredMedicines == null or expiredMedicines.isEmpty()}"><td colspan="5" class="text-center py-4"><i class="fa fa-check-circle text-success me-2"></i>No expired medicines!</td></tr>
+            <tr th:each="med, i : ${expiredMedicines}" style="background:rgba(231,76,60,0.03);">
+                <td th:text="${i.count}"></td><td class="fw-600" th:text="${med.productName}"></td>
+                <td><code th:text="${med.skuId}"></code></td><td th:text="${med.stockQuantity} + ' units'"></td>
+                <td><span class="badge-danger" th:text="${med.expiryDate != null ? #temporals.format(med.expiryDate, 'dd MMM yyyy') : 'N/A'}"></span></td>
+            </tr>
+            </tbody>
+        </table></div>
+    </div>
+</div></main>
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+</body>
+</html>

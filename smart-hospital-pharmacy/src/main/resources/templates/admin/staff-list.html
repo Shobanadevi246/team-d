@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/><title>Staff List</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Staff Details')}"></th:block>
+<main class="main-content"><div class="content-area">
+<div class="page-header d-flex align-items-center justify-content-between">
+<div><h2><i class="fa fa-users me-2" style="color:var(--secondary);"></i>Staff Details</h2><p>Manage all registered staff members</p></div>
+<a th:href="@{/admin/staff/add}" class="btn btn-primary"><i class="fa fa-plus me-2"></i>Add Staff</a>
+</div>
+<div th:if="${success}" class="alert alert-success alert-dismissible fade show"><i class="fa fa-check-circle me-2"></i><span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+<div class="table-card">
+<div class="table-header"><div class="table-title"><i class="fa fa-list me-2"></i>All Staff Members</div>
+<input type="text" id="searchInput" class="form-control" style="width:220px;border-radius:8px;font-size:13px;" placeholder="Search staff..." oninput="filterTable()"/>
+</div>
+<div class="table-responsive">
+<table class="table table-hover" id="staffTable">
+<thead><tr><th>#</th><th>Name</th><th>Staff ID</th><th>Email</th><th>Shop</th><th>Block</th><th>Status</th><th>Actions</th></tr></thead>
+<tbody>
+<tr th:each="s, i : ${staffList}">
+<td th:text="${i.count}">1</td>
+<td><div class="d-flex align-items-center gap-2"><div style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#1a3a5c,#0d7c66);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;" th:text="${s.staffName.substring(0,1)}">S</div><span th:text="${s.staffName}" style="font-weight:600;"></span></div></td>
+<td><code th:text="${s.staffId}" style="background:#f0f4f8;padding:3px 8px;border-radius:6px;font-size:12px;"></code></td>
+<td th:text="${s.email}" style="font-size:13px;"></td>
+<td th:text="${s.shopNumber}"></td>
+<td th:text="${s.shopBlockName}"></td>
+<td><span th:if="${s.locked}" class="badge-danger"><i class="fa fa-lock me-1"></i>Locked</span><span th:unless="${s.locked}" class="badge-success"><i class="fa fa-check me-1"></i>Active</span></td>
+<td><a th:href="@{/admin/staff/{id}(id=${s.id})}" class="btn btn-sm btn-outline-primary me-1"><i class="fa fa-eye"></i></a></td>
+</tr>
+<tr th:if="${#lists.isEmpty(staffList)}"><td colspan="8" class="text-center py-5" style="color:#ccc;"><i class="fa fa-users fa-2x mb-2 d-block"></i>No staff members yet</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div></main>
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+<script>
+function filterTable(){const q=document.getElementById('searchInput').value.toLowerCase();document.querySelectorAll('#staffTable tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';});}
+</script>
+</body></html>

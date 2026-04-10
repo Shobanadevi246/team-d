@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Verify OTP - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family:'Inter',sans-serif; background:linear-gradient(135deg,#1a3a5c,#0d7c66); min-height:100vh; display:flex; align-items:center; justify-content:center; }
+        .card { border:none; border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,0.2); max-width:440px; width:100%; padding:40px; }
+        .icon-wrap { width:80px; height:80px; background:linear-gradient(135deg,#1a3a5c,#0d7c66); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px; }
+        .otp-inputs { display:flex; gap:10px; justify-content:center; margin:20px 0; }
+        .otp-input { width:52px; height:56px; text-align:center; font-size:22px; font-weight:700; border:2px solid #e8ecf0; border-radius:12px; transition:all 0.3s; color:#1a3a5c; }
+        .otp-input:focus { border-color:#0d7c66; box-shadow:0 0 0 4px rgba(13,124,102,0.1); outline:none; }
+        .btn-primary-custom { background:linear-gradient(135deg,#1a3a5c,#0d7c66); border:none; width:100%; padding:12px; border-radius:10px; color:white; font-weight:600; font-size:15px; cursor:pointer; transition:all 0.3s; }
+        .btn-primary-custom:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,0.2); }
+        .timer { text-align:center; font-size:13px; color:#888; margin-bottom:12px; }
+        .timer span { color:#e74c3c; font-weight:700; }
+        .back-link { text-align:center; margin-top:16px; font-size:14px; }
+        .back-link a { color:#0d7c66; text-decoration:none; font-weight:500; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="icon-wrap"><i class="fa fa-shield-alt fa-2x" style="color:white;"></i></div>
+    <h4 class="text-center fw-800 mb-1" style="color:#1a3a5c;font-weight:800;">Verify OTP</h4>
+    <p class="text-center text-muted mb-2" style="font-size:14px;">Enter the 6-digit OTP sent to your email</p>
+    <p class="text-center mb-3" style="font-size:13px;color:#0d7c66;font-weight:600;" th:if="${email}" th:text="${email}"></p>
+
+    <div th:if="${success}" class="alert alert-success rounded-3 py-2 mb-3" style="font-size:13px;">
+        <i class="fa fa-check-circle me-2"></i><span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger rounded-3 py-2 mb-3" style="font-size:13px;">
+        <i class="fa fa-exclamation-circle me-2"></i><span th:text="${error}"></span>
+    </div>
+
+    <form th:action="@{/auth/verify-otp}" method="post" id="otpForm">
+        <input type="hidden" name="email" th:value="${email}" id="emailField"/>
+        <input type="hidden" name="otp" id="otpHidden"/>
+
+        <div class="otp-inputs">
+            <input type="text" class="otp-input" maxlength="1" id="d1"/>
+            <input type="text" class="otp-input" maxlength="1" id="d2"/>
+            <input type="text" class="otp-input" maxlength="1" id="d3"/>
+            <input type="text" class="otp-input" maxlength="1" id="d4"/>
+            <input type="text" class="otp-input" maxlength="1" id="d5"/>
+            <input type="text" class="otp-input" maxlength="1" id="d6"/>
+        </div>
+
+        <div class="timer">OTP expires in: <span id="countdown">10:00</span></div>
+
+        <button type="submit" class="btn-primary-custom">
+            <i class="fa fa-check-circle me-2"></i>Verify OTP
+        </button>
+    </form>
+    <div class="back-link">
+        <a th:href="@{/auth/forgot-password}"><i class="fa fa-arrow-left me-1"></i>Resend OTP</a>
+    </div>
+</div>
+<script>
+    // OTP input auto-focus
+    const inputs = document.querySelectorAll('.otp-input');
+    inputs.forEach((input, idx) => {
+        input.addEventListener('input', () => {
+            if (input.value && idx < inputs.length - 1) inputs[idx + 1].focus();
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && !input.value && idx > 0) inputs[idx - 1].focus();
+        });
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text').slice(0, 6);
+            text.split('').forEach((ch, i) => { if (inputs[i]) inputs[i].value = ch; });
+            if (inputs[Math.min(text.length, 5)]) inputs[Math.min(text.length, 5)].focus();
+        });
+    });
+    function compileOtp() {
+        let otp = '';
+        inputs.forEach(i => otp += i.value);
+        document.getElementById('otpHidden').value = otp;
+    }
+    document.getElementById('otpForm').addEventListener('submit', function () {
+        compileOtp();
+    });
+    // Countdown
+    let seconds = 600;
+    const timer = setInterval(() => {
+        seconds--;
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        document.getElementById('countdown').textContent = `${m}:${s}`;
+        if (seconds <= 0) { clearInterval(timer); document.getElementById('countdown').textContent = 'EXPIRED'; }
+    }, 1000);
+</script>
+</body>
+</html>

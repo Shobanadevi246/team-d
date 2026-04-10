@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/><title>Medicine Details - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Medicine Details')}"></th:block>
+<main class="main-content"><div class="content-area">
+
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a th:href="@{/admin/medicines}" class="btn btn-outline-primary btn-sm"><i class="fa fa-arrow-left me-1"></i>Back</a>
+        <h2 class="mb-0" style="font-size:20px;font-weight:800;color:var(--primary);">Medicine Details</h2>
+        <div class="ms-auto d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#qrModal">
+                <i class="fa fa-qrcode me-1"></i>QR Code
+            </button>
+            <button class="btn btn-outline-primary btn-sm" onclick="printLabel()">
+                <i class="fa fa-print me-1"></i>Print Label
+            </button>
+        </div>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger"><span th:text="${error}"></span></div>
+
+    <div th:if="${medicine != null}">
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="table-card p-4 text-center">
+                    <img th:if="${medicine.imagePath != null}" th:src="@{'/uploads/medicines/' + ${medicine.imagePath}}"
+                         style="width:120px;height:120px;border-radius:16px;object-fit:cover;margin-bottom:12px;"
+                         onerror="this.style.display='none'"/>
+                    <div th:if="${medicine.imagePath == null}" class="stat-icon mx-auto mb-3"
+                         style="width:80px;height:80px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-size:28px;border-radius:20px;">
+                        <i class="fa fa-pills"></i>
+                    </div>
+                    <h5 th:text="${medicine.productName}" style="font-weight:800;color:var(--primary);"></h5>
+                    <code th:text="${medicine.skuId}" style="font-size:11px;"></code>
+                    <div class="mt-2">
+                        <span th:if="${medicine.stockQuantity < 10}" class="badge-danger" th:text="${medicine.stockQuantity} + ' units'"></span>
+                        <span th:if="${medicine.stockQuantity >= 10}" class="badge-success" th:text="${medicine.stockQuantity} + ' units'"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="table-card p-4 h-100">
+                    <h6 style="font-weight:700;color:var(--primary);margin-bottom:16px;">Medicine Information</h6>
+                    <div class="row g-3">
+                        <div class="col-sm-4">
+                            <label class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;">Product Name</label>
+                            <div class="fw-600" th:text="${medicine.productName}"></div>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;">SKU ID</label>
+                            <div><code th:text="${medicine.skuId}"></code></div>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;">Current Stock</label>
+                            <div>
+                                <span th:if="${medicine.stockQuantity < 10}" class="badge-danger fw-bold" th:text="${medicine.stockQuantity} + ' units'"></span>
+                                <span th:if="${medicine.stockQuantity >= 10}" class="badge-success fw-bold" th:text="${medicine.stockQuantity} + ' units'"></span>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;">Expiry Date</label>
+                            <div th:text="${medicine.expiryDate != null ? #temporals.format(medicine.expiryDate, 'dd MMM yyyy') : 'Not set'}"></div>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;">Added By</label>
+                            <div>
+                                <span th:if="${medicine.adminAdded}" class="badge-info">Admin</span>
+                                <span th:if="${!medicine.adminAdded}" class="badge-success" th:text="${medicine.addedByStaff?.staffName ?: 'Staff'}"></span>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;">Registered On</label>
+                            <div th:text="${medicine.createdAt != null ? #temporals.format(medicine.createdAt, 'dd MMM yyyy') : 'N/A'}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="table-card">
+            <div class="table-header">
+        <div class="table-title"><i class="fa fa-history me-2"></i>Stock In / Out History</div>
+                <span class="badge-info" th:text="${transactions?.size() + ' transactions'}">0</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr>
+                        <th>#</th><th>Type</th><th>Quantity</th><th>Expiry Updated</th><th>Performed By</th><th>Notes</th><th>Date & Time</th>
+                    </tr></thead>
+                    <tbody>
+                    <tr th:if="${transactions == null or transactions.isEmpty()}">
+                        <td colspan="7" class="text-center py-4 text-muted">No stock transactions found.</td>
+                    </tr>
+                    <tr th:each="tx, i : ${transactions}">
+                        <td th:text="${i.count}"></td>
+                        <td>
+                            <span th:if="${tx.transactionType.name() == 'STOCK_IN'}" class="badge-success"><i class="fa fa-arrow-down me-1"></i>Stock IN</span>
+                            <span th:if="${tx.transactionType.name() == 'STOCK_OUT'}" class="badge-danger"><i class="fa fa-arrow-up me-1"></i>Stock OUT</span>
+                        </td>
+                        <td class="fw-600" th:text="${tx.quantity}"></td>
+                        <td>
+                            <span th:if="${tx.expiryDateUpdated != null}" th:text="${#temporals.format(tx.expiryDateUpdated, 'dd MMM yyyy')}"></span>
+                            <span th:if="${tx.expiryDateUpdated == null}" class="text-muted">-</span>
+                        </td>
+                        <td>
+                            <span th:if="${tx.performedByAdmin}" class="badge-info">Admin</span>
+                            <span th:if="${!tx.performedByAdmin}" class="badge-success" th:text="${tx.performedByStaff?.staffName ?: 'Staff'}"></span>
+                        </td>
+                        <td th:text="${tx.notes ?: '-'}"></td>
+                        <td th:text="${tx.transactionDate != null ? #temporals.format(tx.transactionDate, 'dd MMM yyyy HH:mm') : 'N/A'}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div></main>
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content" style="border:none;border-radius:16px;">
+            <div class="modal-header" style="background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border-radius:16px 16px 0 0;">
+                <h5 class="modal-title"><i class="fa fa-qrcode me-2"></i>Medicine QR Code</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4" style="background:var(--card-bg);">
+                <div id="qrCodeDiv" class="d-flex justify-content-center mb-3"></div>
+                <div class="fw-700" style="color:var(--primary);" th:text="${medicine?.productName}"></div>
+                <div class="text-muted" style="font-size:12px;" th:text="${medicine?.skuId}"></div>
+                <button class="btn btn-outline-primary btn-sm mt-3" onclick="downloadQR()"><i class="fa fa-download me-1"></i>Download</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Print Label Area (hidden) -->
+<div id="labelPrint" style="display:none;font-family:monospace;padding:20px;border:2px solid #000;width:300px;">
+    <div style="text-align:center;font-weight:bold;font-size:16px;">🏥 SMART HOSPITAL PHARMACY</div>
+    <hr/>
+    <div><b>Medicine:</b> <span id="lblName"></span></div>
+    <div><b>SKU:</b> <span id="lblSku"></span></div>
+    <div><b>Stock:</b> <span id="lblStock"></span></div>
+    <div><b>Expiry:</b> <span id="lblExpiry"></span></div>
+    <hr/>
+    <div style="text-align:center;font-size:10px;">Keep in cool dry place | For medical use only</div>
+</div>
+<script>
+initSearch('/admin/search');
+// QR Code
+const medName = '[[${medicine?.productName}]]';
+const medSku  = '[[${medicine?.skuId}]]';
+const medStock= '[[${medicine?.stockQuantity}]]';
+const medExp  = '[[${medicine?.expiryDate}]]';
+document.getElementById('qrModal').addEventListener('shown.bs.modal', () => {
+    const el = document.getElementById('qrCodeDiv');
+    el.innerHTML = '';
+    generateQR('qrCodeDiv', `Medicine: ${medName}\nSKU: ${medSku}\nStock: ${medStock}\nExpiry: ${medExp}`);
+});
+function downloadQR() {
+    const canvas = document.querySelector('#qrCodeDiv canvas');
+    if (!canvas) return;
+    const link = document.createElement('a');
+    link.download = medSku + '-qr.png';
+    link.href = canvas.toDataURL();
+    link.click();
+}
+function printLabel() {
+    document.getElementById('lblName').textContent = medName;
+    document.getElementById('lblSku').textContent = medSku;
+    document.getElementById('lblStock').textContent = medStock + ' units';
+    document.getElementById('lblExpiry').textContent = medExp || 'N/A';
+    const el = document.getElementById('labelPrint');
+    el.style.display = 'block';
+    window.print();
+    el.style.display = 'none';
+}
+</script>
+</html>

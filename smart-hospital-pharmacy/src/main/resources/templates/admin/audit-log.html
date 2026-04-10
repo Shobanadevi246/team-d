@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/><title>Audit Log - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Audit Log')}"></th:block>
+<main class="main-content"><div class="content-area">
+
+    <div class="page-header">
+        <h2><i class="fa fa-shield-alt me-2" style="color:var(--secondary);"></i>System Audit Log</h2>
+        <p>Complete trail of all actions performed by admin and staff</p>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="d-flex gap-2 mb-4">
+        <a th:href="@{/admin/audit-log(filter='ALL')}" class="btn btn-sm" th:classappend="${filter == 'ALL'} ? 'btn-primary' : 'btn-outline-primary'">
+            <i class="fa fa-list me-1"></i>All
+        </a>
+        <a th:href="@{/admin/audit-log(filter='ADMIN')}" class="btn btn-sm" th:classappend="${filter == 'ADMIN'} ? 'btn-primary' : 'btn-outline-primary'">
+            <i class="fa fa-user-shield me-1"></i>Admin Only
+        </a>
+        <a th:href="@{/admin/audit-log(filter='STAFF')}" class="btn btn-sm" th:classappend="${filter == 'STAFF'} ? 'btn-primary' : 'btn-outline-primary'">
+            <i class="fa fa-users me-1"></i>Staff Only
+        </a>
+    </div>
+
+    <div class="table-card">
+        <div class="table-header">
+            <div class="table-title"><i class="fa fa-history me-2"></i>Activity Log (Last 100 entries)</div>
+            <input type="text" class="form-control" id="logSearch" style="width:200px;font-size:13px;" placeholder="Search..." onkeyup="filterLog()"/>
+        </div>
+        <div class="table-responsive">
+            <table class="table" id="logTable">
+                <thead><tr><th>#</th><th>Action</th><th>Performed By</th><th>Role</th><th>Details</th><th>Entity</th><th>Date &amp; Time</th></tr></thead>
+                <tbody>
+                <tr th:if="${logs == null or logs.isEmpty()}">
+                    <td colspan="7" class="text-center py-5 text-muted"><i class="fa fa-shield-alt fa-2x mb-2 d-block"></i>No audit logs yet.</td>
+                </tr>
+                <tr th:each="log, i : ${logs}">
+                    <td th:text="${i.count}"></td>
+                    <td>
+                        <div class="fw-600" style="font-size:13px;" th:text="${log.action}"></div>
+                    </td>
+                    <td th:text="${log.performedBy}"></td>
+                    <td>
+                        <span th:if="${log.role == 'ADMIN'}" class="badge-info">Admin</span>
+                        <span th:if="${log.role == 'STAFF'}" class="badge-success">Staff</span>
+                    </td>
+                    <td style="font-size:12px;color:var(--text-muted);max-width:200px;white-space:normal;" th:text="${log.details ?: '-'}"></td>
+                    <td>
+                        <span th:if="${log.entityType != null}" class="badge-warning" style="font-size:10px;" th:text="${log.entityType}"></span>
+                        <span th:if="${log.entityType == null}" class="text-muted">-</span>
+                    </td>
+                    <td style="font-size:12px;color:var(--text-muted);" th:text="${log.performedAt != null ? #temporals.format(log.performedAt, 'dd MMM yyyy HH:mm:ss') : 'N/A'}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div></main>
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+<script>
+function filterLog(){const q=document.getElementById('logSearch').value.toLowerCase();document.querySelectorAll('#logTable tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';});}
+initSearch('/admin/search');
+</script>
+</body>
+</html>

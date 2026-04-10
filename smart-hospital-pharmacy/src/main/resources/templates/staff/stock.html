@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/><title>Stock In/Out - Staff Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: staff-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: staff-header('Stock In / Out')}"></th:block>
+<main class="main-content"><div class="content-area">
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show"><i class="fa fa-check-circle me-2"></i><span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show"><i class="fa fa-exclamation-circle me-2"></i><span th:text="${error}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div class="page-header"><h2><i class="fa fa-exchange-alt me-2" style="color:var(--secondary);"></i>Medicine Stock In / Out</h2><p>Update inventory — add or dispense stock</p></div>
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="table-card p-4">
+                <h5 style="font-weight:700;color:var(--secondary);margin-bottom:20px;"><i class="fa fa-arrow-circle-down me-2"></i>Stock IN</h5>
+                <form th:action="@{/staff/stock/in}" method="post">
+                    <div class="mb-3"><label class="form-label">Select Medicine <span class="text-danger">*</span></label>
+                        <select class="form-select" name="medicineId" required><option value="">-- Choose Medicine --</option>
+                        <option th:each="med : ${medicines}" th:value="${med.id}" th:text="${med.productName + ' (' + med.skuId + ') - Stock: ' + med.stockQuantity}"></option></select></div>
+                    <div class="mb-3"><label class="form-label">Quantity <span class="text-danger">*</span></label><input type="number" class="form-control" name="quantity" min="1" required placeholder="Enter quantity"/></div>
+                    <div class="mb-3"><label class="form-label">Update Expiry Date <small class="text-muted">(optional)</small></label><input type="date" class="form-control" name="expiryDate"/></div>
+                    <div class="mb-3"><label class="form-label">Notes <small class="text-muted">(optional)</small></label><input type="text" class="form-control" name="notes" placeholder="e.g. New batch received"/></div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fa fa-arrow-down me-2"></i>Add to Stock</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="table-card p-4">
+                <h5 style="font-weight:700;color:#e74c3c;margin-bottom:20px;"><i class="fa fa-arrow-circle-up me-2"></i>Stock OUT</h5>
+                <form th:action="@{/staff/stock/out}" method="post">
+                    <div class="mb-3"><label class="form-label">Select Medicine <span class="text-danger">*</span></label>
+                        <select class="form-select" name="medicineId" required><option value="">-- Choose Medicine --</option>
+                        <option th:each="med : ${medicines}" th:value="${med.id}" th:text="${med.productName + ' (' + med.skuId + ') - Stock: ' + med.stockQuantity}"></option></select></div>
+                    <div class="mb-3"><label class="form-label">Quantity <span class="text-danger">*</span></label><input type="number" class="form-control" name="quantity" min="1" required placeholder="Enter quantity"/></div>
+                    <div class="mb-3"><label class="form-label">Notes <small class="text-muted">(optional)</small></label><input type="text" class="form-control" name="notes" placeholder="e.g. Dispensed to patient"/></div>
+                    <div style="height:68px;"></div>
+                    <button type="submit" class="btn w-100" style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:white;font-weight:600;border:none;border-radius:10px;padding:10px;"><i class="fa fa-arrow-up me-2"></i>Remove from Stock</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="table-card">
+        <div class="table-header"><div class="table-title"><i class="fa fa-history me-2"></i>Recent Transactions</div></div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>#</th><th>Medicine</th><th>Type</th><th>Qty</th><th>Expiry Updated</th><th>By</th><th>Notes</th><th>Date</th></tr></thead>
+                <tbody>
+                <tr th:if="${transactions == null or transactions.isEmpty()}"><td colspan="8" class="text-center py-4 text-muted">No transactions yet.</td></tr>
+                <tr th:each="tx, i : ${transactions}">
+                    <td th:text="${i.count}"></td><td th:text="${tx.medicine?.productName}"></td>
+                    <td><span th:if="${tx.transactionType.name() == 'STOCK_IN'}" class="badge-success"><i class="fa fa-arrow-down me-1"></i>IN</span><span th:if="${tx.transactionType.name() == 'STOCK_OUT'}" class="badge-danger"><i class="fa fa-arrow-up me-1"></i>OUT</span></td>
+                    <td class="fw-600" th:text="${tx.quantity}"></td>
+                    <td th:text="${tx.expiryDateUpdated != null ? #temporals.format(tx.expiryDateUpdated,'dd MMM yyyy') : '-'}"></td>
+                    <td><span th:if="${tx.performedByAdmin}" class="badge-info">Admin</span><span th:if="${!tx.performedByAdmin}" class="badge-success" th:text="${tx.performedByStaff?.staffName ?: 'Staff'}"></span></td>
+                    <td th:text="${tx.notes ?: '-'}"></td>
+                    <td th:text="${tx.transactionDate != null ? #temporals.format(tx.transactionDate,'dd MMM yyyy HH:mm') : 'N/A'}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div></main>
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+</body>
+</html>

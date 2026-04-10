@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/><title>Locked Accounts - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Locked Accounts')}"></th:block>
+<main class="main-content"><div class="content-area">
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show"><i class="fa fa-check-circle me-2"></i><span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+
+    <div class="page-header">
+        <h2><i class="fa fa-lock me-2" style="color:#e74c3c;"></i>Locked Staff Accounts</h2>
+        <p>Staff accounts locked due to 3+ failed login attempts. Only admin can unlock.</p>
+    </div>
+
+    <div th:if="${lockedStaff != null and !lockedStaff.isEmpty()}" class="alert alert-danger mb-4">
+        <i class="fa fa-exclamation-triangle me-2"></i>
+        <strong th:text="${lockedStaff.size()} + ' account(s)'"></strong> are currently locked and cannot log in.
+    </div>
+
+    <div class="table-card">
+        <div class="table-header">
+            <div class="table-title"><i class="fa fa-user-lock me-2"></i>Locked Accounts</div>
+            <span class="badge-danger" th:text="${lockedStaff?.size() ?: 0} + ' locked'">0 locked</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr>
+                    <th>#</th><th>Staff Name</th><th>Staff ID</th><th>Email</th><th>Shop</th>
+                    <th>Failed Attempts</th><th>Locked At</th><th>Action</th>
+                </tr></thead>
+                <tbody>
+                <tr th:if="${lockedStaff == null or lockedStaff.isEmpty()}">
+                    <td colspan="8" class="text-center py-5">
+                        <i class="fa fa-check-circle fa-2x text-success mb-2 d-block"></i>
+                        <span class="text-muted">No locked accounts. All staff can log in normally.</span>
+                    </td>
+                </tr>
+                <tr th:each="staff, i : ${lockedStaff}" style="background:rgba(231,76,60,0.03);">
+                    <td th:text="${i.count}"></td>
+                    <td class="fw-600" th:text="${staff.staffName}"></td>
+                    <td><code th:text="${staff.staffId}"></code></td>
+                    <td th:text="${staff.email}"></td>
+                    <td th:text="${staff.shopBlockName + ' - ' + staff.shopNumber}"></td>
+                    <td><span class="badge-danger fw-bold" th:text="${staff.failedLoginAttempts} + ' attempts'"></span></td>
+                    <td th:text="${staff.lockedAt != null ? #temporals.format(staff.lockedAt, 'dd MMM yyyy HH:mm') : 'N/A'}"></td>
+                    <td>
+                        <form th:action="@{'/admin/staff/' + ${staff.id} + '/unlock'}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-primary btn-sm"
+                                    onclick="return confirm('Unlock account for ' + '[[${staff.staffName}]]' + '?')">
+                                <i class="fa fa-unlock me-1"></i>Unlock
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div></main>
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+</body>
+</html>

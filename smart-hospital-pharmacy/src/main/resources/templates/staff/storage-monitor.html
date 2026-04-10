@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/><title>Storage Monitor - Staff Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+    <style>.status-OPTIMAL{color:#27ae60;font-weight:700;}.status-WARNING{color:#f39c12;font-weight:700;}.status-CRITICAL{color:#e74c3c;font-weight:700;}.status-BREACH{color:#800000;font-weight:700;}</style>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: staff-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: staff-header('Storage Monitor')}"></th:block>
+<main class="main-content"><div class="content-area">
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show"><i class="fa fa-check-circle me-2"></i><span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div class="page-header d-flex align-items-center justify-content-between">
+        <div><h2><i class="fa fa-thermometer-half me-2" style="color:#00bcd4;"></i>Storage Monitor</h2><p>Log and view temperature &amp; humidity conditions</p></div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staffLogModal"><i class="fa fa-plus me-2"></i>Log Reading</button>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div th:each="entry : ${zoneSummary}" class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="fw-700 mb-1" style="font-size:13px;" th:text="${entry.key.replace('_',' ')}"></div>
+                <div style="font-size:22px;font-weight:800;color:var(--primary);" th:text="${entry.value.get('temp')} + '°C'"></div>
+                <div style="font-size:12px;color:var(--text-muted);" th:text="'Humidity: ' + ${entry.value.get('humidity')} + '%'"></div>
+                <div style="font-size:12px;" th:class="'status-' + ${entry.value.get('status')}" th:text="${entry.value.get('status')}"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-header"><div class="table-title"><i class="fa fa-history me-2"></i>Recent Storage Logs</div></div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>#</th><th>Medicine</th><th>Zone</th><th>Temp</th><th>Humidity</th><th>Status</th><th>By</th><th>Time</th></tr></thead>
+                <tbody>
+                <tr th:if="${recentLogs == null or recentLogs.isEmpty()}"><td colspan="8" class="text-center py-4 text-muted">No logs yet.</td></tr>
+                <tr th:each="log, i : ${recentLogs}">
+                    <td th:text="${i.count}"></td>
+                    <td th:text="${log.medicine?.productName ?: 'General'}"></td>
+                    <td><span class="badge-info" style="font-size:10px;" th:text="${log.storageZone?.replace('_',' ')}"></span></td>
+                    <td th:text="${log.temperatureCelsius} + '°C'"></td>
+                    <td th:text="${log.humidityPercent} + '%'"></td>
+                    <td th:class="'status-' + ${log.status.name()}" th:text="${log.status.name()}"></td>
+                    <td th:text="${log.loggedBy}"></td>
+                    <td style="font-size:12px;" th:text="${log.loggedAt != null ? #temporals.format(log.loggedAt,'dd MMM HH:mm') : 'N/A'}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div></main>
+
+<div class="modal fade" id="staffLogModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border:none;border-radius:16px;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#00bcd4,#1a3a5c);color:white;border-radius:16px 16px 0 0;">
+                <h5 class="modal-title"><i class="fa fa-thermometer-half me-2"></i>Log Reading</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" style="background:var(--card-bg);">
+                <form th:action="@{/staff/storage-monitor/log}" method="post">
+                    <div class="mb-3"><label class="form-label">Medicine</label>
+                        <select class="form-select" name="medicineId"><option value="1">-- General --</option>
+                        <option th:each="m : ${medicines}" th:value="${m.id}" th:text="${m.productName}"></option></select></div>
+                    <div class="mb-3"><label class="form-label">Zone *</label>
+                        <select class="form-select" name="zone" required>
+                            <option value="COLD_STORAGE">❄️ Cold Storage</option>
+                            <option value="ROOM_TEMP">🏠 Room Temperature</option>
+                            <option value="CONTROLLED_SUBSTANCE">🔒 Controlled</option>
+                            <option value="FLAMMABLE">🔥 Flammable</option>
+                        </select></div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6"><label class="form-label">Temperature (°C) *</label><input type="number" step="0.1" class="form-control" name="temperature" required/></div>
+                        <div class="col-6"><label class="form-label">Humidity (%) *</label><input type="number" step="0.1" class="form-control" name="humidity" required/></div>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Notes</label><input type="text" class="form-control" name="notes"/></div>
+                    <div class="d-flex gap-2"><button type="submit" class="btn btn-primary px-4"><i class="fa fa-save me-2"></i>Log</button><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+</body>
+</html>

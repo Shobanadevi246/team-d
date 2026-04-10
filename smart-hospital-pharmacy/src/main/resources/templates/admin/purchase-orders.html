@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/><title>Purchase Orders - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Purchase Orders')}"></th:block>
+<main class="main-content"><div class="content-area">
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show"><i class="fa fa-check-circle me-2"></i><span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show"><i class="fa fa-exclamation-circle me-2"></i><span th:text="${error}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+
+    <div class="page-header d-flex align-items-center justify-content-between">
+        <div>
+            <h2><i class="fa fa-shopping-cart me-2" style="color:var(--secondary);"></i>Purchase Orders</h2>
+            <p>Raise and track medicine restock purchase orders</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newOrderModal">
+            <i class="fa fa-plus me-2"></i>New Order
+        </button>
+    </div>
+
+    <!-- Stats row -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-icon mx-auto mb-2" style="background:rgba(243,156,18,0.1);color:#f39c12;"><i class="fa fa-clock"></i></div>
+                <div class="stat-num" th:text="${pendingCount}">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-icon mx-auto mb-2" style="background:rgba(26,58,92,0.1);color:var(--primary);"><i class="fa fa-list"></i></div>
+                <div class="stat-num" th:text="${orders?.size() ?: 0}">0</div>
+                <div class="stat-label">Total Orders</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-header">
+            <div class="table-title"><i class="fa fa-list me-2"></i>All Purchase Orders</div>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>#</th><th>Order No.</th><th>Medicine</th><th>Qty</th><th>Supplier</th><th>Est. Cost</th><th>Expected Date</th><th>Raised By</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                <tr th:if="${orders == null or orders.isEmpty()}">
+                    <td colspan="10" class="text-center py-5 text-muted"><i class="fa fa-shopping-cart fa-2x mb-2 d-block"></i>No purchase orders yet. Create the first one!</td>
+                </tr>
+                <tr th:each="order, i : ${orders}">
+                    <td th:text="${i.count}"></td>
+                    <td><code th:text="${order.orderNumber}"></code></td>
+                    <td class="fw-600" th:text="${order.medicine?.productName}"></td>
+                    <td th:text="${order.quantityOrdered} + ' units'"></td>
+                    <td th:text="${order.supplierName ?: '-'}"></td>
+                    <td th:text="${order.estimatedCost != null ? '₹' + order.estimatedCost : '-'}"></td>
+                    <td th:text="${order.expectedDeliveryDate != null ? #temporals.format(order.expectedDeliveryDate,'dd MMM yyyy') : '-'}"></td>
+                    <td>
+                        <span th:if="${order.raisedByAdmin}" class="badge-info">Admin</span>
+                        <span th:if="${!order.raisedByAdmin}" class="badge-success" th:text="${order.raisedByStaff?.staffName ?: 'Staff'}"></span>
+                    </td>
+                    <td>
+                        <span th:if="${order.status.name() == 'PENDING'}" class="badge-warning">Pending</span>
+                        <span th:if="${order.status.name() == 'APPROVED'}" class="badge-info">Approved</span>
+                        <span th:if="${order.status.name() == 'ORDERED'}" class="badge-purple">Ordered</span>
+                        <span th:if="${order.status.name() == 'DELIVERED'}" class="badge-success">Delivered</span>
+                        <span th:if="${order.status.name() == 'CANCELLED'}" class="badge-danger">Cancelled</span>
+                    </td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">Update</button>
+                            <ul class="dropdown-menu" style="font-size:13px;">
+                                <li><form th:action="@{'/admin/purchase-orders/' + ${order.id} + '/status'}" method="post"><input type="hidden" name="status" value="APPROVED"/><button type="submit" class="dropdown-item"><i class="fa fa-check text-success me-2"></i>Approve</button></form></li>
+                                <li><form th:action="@{'/admin/purchase-orders/' + ${order.id} + '/status'}" method="post"><input type="hidden" name="status" value="ORDERED"/><button type="submit" class="dropdown-item"><i class="fa fa-truck text-primary me-2"></i>Mark Ordered</button></form></li>
+                                <li><form th:action="@{'/admin/purchase-orders/' + ${order.id} + '/status'}" method="post"><input type="hidden" name="status" value="DELIVERED"/><button type="submit" class="dropdown-item"><i class="fa fa-box text-success me-2"></i>Mark Delivered</button></form></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><form th:action="@{'/admin/purchase-orders/' + ${order.id} + '/status'}" method="post"><input type="hidden" name="status" value="CANCELLED"/><button type="submit" class="dropdown-item text-danger"><i class="fa fa-times me-2"></i>Cancel</button></form></li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div></main>
+
+<!-- New Order Modal -->
+<div class="modal fade" id="newOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border:none;border-radius:16px;">
+            <div class="modal-header" style="background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border-radius:16px 16px 0 0;">
+                <h5 class="modal-title"><i class="fa fa-shopping-cart me-2"></i>Create Purchase Order</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" style="background:var(--card-bg);">
+                <form th:action="@{/admin/purchase-orders/create}" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Medicine <span class="text-danger">*</span></label>
+                            <select class="form-select" name="medicineId" required>
+                                <option value="">-- Select Medicine --</option>
+                                <option th:each="med : ${medicines}" th:value="${med.id}"
+                                        th:text="${med.productName + ' (Stock: ' + med.stockQuantity + ')'}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Quantity to Order <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="quantityOrdered" min="1" required placeholder="e.g. 100"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Supplier Name</label>
+                            <input type="text" class="form-control" name="supplierName" placeholder="ABC Pharmaceuticals"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Supplier Contact</label>
+                            <input type="text" class="form-control" name="supplierContact" placeholder="+91 98765 43210"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Estimated Cost (₹)</label>
+                            <input type="number" step="0.01" class="form-control" name="estimatedCost" placeholder="0.00"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Expected Delivery Date</label>
+                            <input type="date" class="form-control" name="expectedDeliveryDate"/>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" name="notes" rows="2" placeholder="Any special instructions..."></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4"><i class="fa fa-save me-2"></i>Create Order</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+<script>initSearch('/admin/search');</script>
+</body>
+</html>

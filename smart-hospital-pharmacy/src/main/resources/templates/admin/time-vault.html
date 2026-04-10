@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/><title>Time-Lock Vault - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+    <style>
+        .vault-door{width:120px;height:120px;border-radius:50%;border:6px solid var(--primary);display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;background:linear-gradient(135deg,#1a3a5c,#0d7c66);color:white;font-size:40px;cursor:pointer;transition:all 0.3s;box-shadow:0 0 30px rgba(26,58,92,0.3);}
+        .vault-door.locked{animation:pulse-vault 2s infinite;}
+        .vault-door.unlocked{background:linear-gradient(135deg,#27ae60,#0d7c66);box-shadow:0 0 30px rgba(39,174,96,0.4);}
+        @keyframes pulse-vault{0%,100%{box-shadow:0 0 30px rgba(231,76,60,0.3);}50%{box-shadow:0 0 60px rgba(231,76,60,0.6);}}
+        .time-window{background:var(--light);border-radius:10px;padding:10px;font-size:13px;text-align:center;}
+        .live-clock{font-size:28px;font-weight:800;color:var(--primary);text-align:center;font-family:'Courier New',monospace;}
+    </style>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Time-Lock Medicine Vault')}"></th:block>
+<main class="main-content"><div class="content-area">
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show"><i class="fa fa-check-circle me-2"></i><span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show"><i class="fa fa-exclamation-circle me-2"></i><span th:text="${error}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+
+    <div class="page-header d-flex align-items-center justify-content-between">
+        <div>
+            <h2><i class="fa fa-clock me-2" style="color:#f39c12;"></i>Time-Lock Medicine Vault</h2>
+            <p>Schedule medicines to only be dispensable during specific time windows — ideal for controlled substances</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#vaultModal"><i class="fa fa-plus me-2"></i>Add Time Lock</button>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3 text-center">
+            <div class="table-card p-4">
+                <div class="live-clock" id="liveClock">00:00:00</div>
+                <div class="text-muted mt-1" style="font-size:12px;">Current Time</div>
+                <div id="liveDate" class="text-muted" style="font-size:11px;margin-top:4px;"></div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="table-card p-4">
+                <h6 style="font-weight:700;color:var(--primary);margin-bottom:16px;">Active Time Locks</h6>
+                <div th:if="${locks == null or locks.isEmpty()}" class="text-center py-4 text-muted">
+                    <i class="fa fa-lock-open fa-2x mb-2 d-block" style="opacity:0.3;"></i>No time locks active. All medicines are freely accessible.
+                </div>
+                <div th:each="lock : ${locks}" class="d-flex align-items-center gap-3 mb-3 p-3" style="background:var(--light);border-radius:12px;">
+                    <div class="vault-door" th:classappend="${lock.currentlyAccessible ? 'unlocked' : 'locked'}"
+                         style="width:50px;height:50px;font-size:20px;min-width:50px;">
+                        <i th:class="${lock.currentlyAccessible ? 'fa fa-lock-open' : 'fa fa-lock'}"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <div class="fw-700" th:text="${lock.medicine?.productName}"></div>
+                        <div class="text-muted" style="font-size:12px;" th:text="${lock.lockReason}"></div>
+                        <div style="font-size:12px;">
+                            <span class="badge-success" th:if="${lock.currentlyAccessible}">✅ Accessible Now</span>
+                            <span class="badge-danger" th:if="${!lock.currentlyAccessible}">🔒 Locked Now</span>
+                            &nbsp;Window: <strong th:text="${lock.allowedFromTime} + ' – ' + ${lock.allowedToTime}"></strong>
+                            &nbsp;Days: <span th:text="${lock.allowedDays ?: 'All Days'}"></span>
+                        </div>
+                    </div>
+                    <form th:action="@{'/admin/time-vault/' + ${lock.id} + '/deactivate'}" method="post">
+                        <button type="submit" class="btn btn-outline-primary btn-sm" onclick="return confirm('Remove this time lock?')"><i class="fa fa-unlock me-1"></i>Remove</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div></main>
+
+<div class="modal fade" id="vaultModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border:none;border-radius:16px;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#f39c12,#e67e22);color:white;border-radius:16px 16px 0 0;">
+                <h5 class="modal-title"><i class="fa fa-clock me-2"></i>Create Time Lock</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" style="background:var(--card-bg);">
+                <form th:action="@{/admin/time-vault/create}" method="post">
+                    <div class="mb-3"><label class="form-label">Medicine *</label>
+                        <select class="form-select" name="medicineId" required>
+                            <option value="">-- Select --</option>
+                            <option th:each="m : ${medicines}" th:value="${m.id}" th:text="${m.productName}"></option>
+                        </select></div>
+                    <div class="mb-3"><label class="form-label">Lock Reason *</label>
+                        <input type="text" class="form-control" name="lockReason" required placeholder="e.g. Controlled narcotic — ICU dispensing only"/></div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6"><label class="form-label">Allowed From *</label><input type="time" class="form-control" name="allowedFrom" required value="08:00"/></div>
+                        <div class="col-6"><label class="form-label">Allowed Until *</label><input type="time" class="form-control" name="allowedTo" required value="20:00"/></div>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Allowed Days <small class="text-muted">(comma-separated: MON,TUE...)</small></label>
+                        <input type="text" class="form-control" name="allowedDays" placeholder="MON,TUE,WED,THU,FRI" value="MON,TUE,WED,THU,FRI"/></div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" name="requiresAdmin" id="reqAdmin"/>
+                        <label class="form-check-label" for="reqAdmin">Requires admin approval each time</label>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4"><i class="fa fa-lock me-2"></i>Activate Lock</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+<script>
+initSearch('/admin/search');
+function updateClock(){
+    const now=new Date();
+    document.getElementById('liveClock').textContent=now.toTimeString().split(' ')[0];
+    document.getElementById('liveDate').textContent=now.toDateString();
+}
+updateClock();setInterval(updateClock,1000);
+</script>
+</body>
+</html>

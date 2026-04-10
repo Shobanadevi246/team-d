@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><title>Fragments</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<th:block th:fragment="layout-styles">
+<style>
+:root{--primary:#1a3a5c;--secondary:#0d7c66;--accent:#00c896;--sidebar-width:270px;--header-h:64px;--light:#f0f4f8;--danger:#e74c3c;--warning:#f39c12;--bg:#f5f7fb;--card-bg:#fff;--text:#333;--text-muted:#888;--border:#f0f0f0;--input-border:#e8ecf0;}
+body.dark-mode{--bg:#0f1923;--card-bg:#1a2535;--text:#e2e8f0;--text-muted:#94a3b8;--border:#2d3748;--input-border:#2d3748;--light:#1e2d3d;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);transition:background 0.3s,color 0.3s;}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-width);background:linear-gradient(180deg,var(--primary) 0%,#0f2b45 100%);z-index:100;overflow-y:auto;scrollbar-width:thin;transition:transform 0.3s;}
+.sidebar-brand{padding:20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:12px;}
+.brand-icon{font-size:30px;}.brand-text{color:white;}.brand-name{font-size:14px;font-weight:800;line-height:1.2;}.brand-sub{font-size:10px;opacity:0.6;letter-spacing:1px;text-transform:uppercase;}
+.sidebar-section{padding:20px 14px 8px;}.sidebar-section-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.4);font-weight:600;padding:0 8px;margin-bottom:6px;}
+.nav-item{margin-bottom:2px;}
+.nav-link{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,0.7);text-decoration:none;font-size:13.5px;font-weight:500;transition:all 0.2s;}
+.nav-link:hover{background:rgba(255,255,255,0.12);color:white;}
+.nav-link.active{background:rgba(0,200,150,0.2);color:var(--accent);}
+.nav-link i{width:18px;text-align:center;font-size:14px;}
+.nav-badge{margin-left:auto;background:var(--danger);color:white;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;}
+.nav-badge.warning{background:var(--warning);}
+.main-header{position:fixed;top:0;left:var(--sidebar-width);right:0;height:var(--header-h);background:var(--card-bg);box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:99;transition:background 0.3s;}
+.header-title{font-size:18px;font-weight:700;color:var(--primary);}
+.header-right{display:flex;align-items:center;gap:12px;}
+.notif-btn{position:relative;width:38px;height:38px;background:var(--light);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;color:#666;transition:all 0.2s;}
+.notif-btn:hover{background:var(--primary);color:white;}
+.notif-badge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:white;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.dark-toggle{width:38px;height:38px;background:var(--light);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;color:#666;transition:all 0.2s;font-size:16px;}
+.dark-toggle:hover{background:var(--primary);color:white;}
+.user-avatar{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;cursor:pointer;}
+.user-name{font-size:13px;font-weight:700;color:var(--primary);}.user-role{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;}
+.main-content{margin-left:var(--sidebar-width);padding-top:var(--header-h);min-height:100vh;}
+.content-area{padding:24px;}
+.stat-card{background:var(--card-bg);border-radius:16px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.05);border:1px solid var(--border);transition:all 0.3s;}
+.stat-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.12);}
+.stat-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.stat-num{font-size:28px;font-weight:800;color:var(--primary);}.stat-label{font-size:13px;color:var(--text-muted);font-weight:500;}
+.table-card{background:var(--card-bg);border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.05);overflow:hidden;border:1px solid var(--border);}
+.table-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.table-title{font-size:15px;font-weight:700;color:var(--primary);}
+.table{margin:0;}.table thead th{background:var(--light);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);border:none;padding:12px 16px;}
+.table tbody td{font-size:13.5px;padding:12px 16px;vertical-align:middle;border-color:var(--border);color:var(--text);}
+.table tbody tr:hover{background:var(--light);}
+.badge-success{background:rgba(39,174,96,0.12);color:#27ae60;font-weight:600;font-size:11px;padding:4px 10px;border-radius:6px;}
+.badge-danger{background:rgba(231,76,60,0.12);color:#e74c3c;font-weight:600;font-size:11px;padding:4px 10px;border-radius:6px;}
+.badge-warning{background:rgba(243,156,18,0.12);color:#f39c12;font-weight:600;font-size:11px;padding:4px 10px;border-radius:6px;}
+.badge-info{background:rgba(52,152,219,0.12);color:#3498db;font-weight:600;font-size:11px;padding:4px 10px;border-radius:6px;}
+.badge-purple{background:rgba(155,89,182,0.12);color:#9b59b6;font-weight:600;font-size:11px;padding:4px 10px;border-radius:6px;}
+.form-label{font-size:13px;font-weight:600;color:var(--primary);margin-bottom:6px;}
+.form-control,.form-select{border:2px solid var(--input-border);border-radius:10px;padding:10px 14px;font-size:14px;transition:all 0.2s;background:var(--card-bg);color:var(--text);}
+.form-control:focus,.form-select:focus{border-color:var(--secondary);box-shadow:0 0 0 4px rgba(13,124,102,0.1);outline:none;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;font-weight:600;font-size:13px;padding:10px 18px;border-radius:10px;color:white;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(26,58,92,0.25);color:white;}
+.btn-outline-primary{border:2px solid var(--primary);color:var(--primary);font-weight:600;font-size:13px;padding:8px 16px;border-radius:10px;background:transparent;}
+.btn-outline-primary:hover{background:var(--primary);color:white;}
+.btn-sm{font-size:12px !important;padding:6px 12px !important;}
+.alert{border:none;border-radius:12px;font-size:14px;}
+.alert-success{background:rgba(39,174,96,0.1);color:#27ae60;}
+.alert-danger{background:rgba(231,76,60,0.1);color:#e74c3c;}
+.alert-warning{background:rgba(243,156,18,0.1);color:#e67e22;}
+.notif-dropdown{width:360px;border:none;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.15);padding:0;overflow:hidden;}
+.notif-header{background:var(--primary);color:white;padding:14px 18px;font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+.notif-item{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;background:var(--card-bg);transition:background 0.2s;}
+.notif-item:hover{background:var(--light);}
+.notif-item-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.notif-item-text{font-size:13px;color:var(--text);}.notif-item-sub{font-size:11px;color:var(--text-muted);}
+.page-header{margin-bottom:24px;}.page-header h2{font-size:22px;font-weight:800;color:var(--primary);}
+.page-header p{color:var(--text-muted);font-size:14px;margin-top:4px;}
+/* Global Search */
+.search-wrapper{position:relative;width:260px;}
+.search-input{width:100%;padding:8px 14px 8px 36px;border:2px solid var(--input-border);border-radius:10px;font-size:13px;background:var(--light);color:var(--text);outline:none;transition:all 0.2s;}
+.search-input:focus{border-color:var(--secondary);background:var(--card-bg);}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;}
+.search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--card-bg);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.15);z-index:9999;display:none;max-height:340px;overflow-y:auto;border:1px solid var(--border);}
+.search-results.show{display:block;}
+.search-result-item{padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border);transition:background 0.2s;}
+.search-result-item:hover{background:var(--light);}
+.search-result-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.search-result-title{font-size:13px;font-weight:600;}.search-result-sub{font-size:11px;color:var(--text-muted);}
+.search-result-type{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:auto;flex-shrink:0;}
+.search-no-results{padding:16px;text-align:center;color:var(--text-muted);font-size:13px;}
+/* QR modal */
+.qr-container{text-align:center;padding:20px;}
+/* Animated counter */
+@keyframes countUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.stat-num{animation:countUp 0.5s ease forwards;}
+/* Pulse for alerts */
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(231,76,60,0.4);}50%{box-shadow:0 0 0 8px rgba(231,76,60,0);}}
+.alert-pulse{animation:pulse 2s infinite;}
+/* Tooltip */
+.fw-600{font-weight:600;}
+@media(max-width:992px){.sidebar{transform:translateX(-100%);}.sidebar.show{transform:translateX(0);}.main-content{margin-left:0;}.main-header{left:0;}.search-wrapper{display:none;}}
+/* Dark mode table */
+.dark-mode .table>:not(caption)>*>*{background:var(--card-bg);color:var(--text);}
+.dark-mode .dropdown-menu{background:var(--card-bg);border-color:var(--border);}
+.dark-mode .dropdown-item{color:var(--text);}
+.dark-mode .dropdown-item:hover{background:var(--light);}
+</style>
+</th:block>
+
+<th:block th:fragment="layout-scripts">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// Auto-dismiss alerts
+setTimeout(()=>{document.querySelectorAll('.alert').forEach(a=>{a.style.transition='opacity 0.5s';a.style.opacity='0';setTimeout(()=>a.remove(),500);});},4000);
+// Dark mode
+(function(){const dm=localStorage.getItem('darkMode');if(dm==='true')document.body.classList.add('dark-mode');})();
+function toggleDarkMode(){const b=document.body;b.classList.toggle('dark-mode');localStorage.setItem('darkMode',b.classList.contains('dark-mode'));const btn=document.getElementById('darkToggle');if(btn)btn.textContent=b.classList.contains('dark-mode')?'☀️':'🌙';}
+document.addEventListener('DOMContentLoaded',()=>{const btn=document.getElementById('darkToggle');if(btn&&document.body.classList.contains('dark-mode'))btn.textContent='☀️';});
+// Animated stat counters
+function animateCounters(){document.querySelectorAll('.stat-num').forEach(el=>{const target=parseInt(el.textContent)||0;let cur=0;const step=Math.max(1,Math.floor(target/30));const t=setInterval(()=>{cur=Math.min(cur+step,target);el.textContent=cur;if(cur>=target)clearInterval(t);},40);});}
+document.addEventListener('DOMContentLoaded',animateCounters);
+// Global Search
+function initSearch(endpoint){const inp=document.getElementById('globalSearch');if(!inp)return;const res=document.getElementById('searchResults');let timer;inp.addEventListener('input',()=>{clearTimeout(timer);const q=inp.value.trim();if(q.length<2){res.classList.remove('show');return;}timer=setTimeout(()=>{fetch(endpoint+'?q='+encodeURIComponent(q)).then(r=>r.json()).then(data=>{renderSearch(data,res);});},300);});inp.addEventListener('focus',()=>{if(inp.value.length>=2)res.classList.add('show');});document.addEventListener('click',e=>{if(!inp.contains(e.target)&&!res.contains(e.target))res.classList.remove('show');});}
+function renderSearch(data,res){const all=[...(data.medicines||[]),...(data.staff||[])];if(!all.length){res.innerHTML='<div class="search-no-results">No results found</div>';res.classList.add('show');return;}const colors={Medicine:'rgba(13,124,102,0.15)',Staff:'rgba(26,58,92,0.15)',Prescription:'rgba(155,89,182,0.15)'};const iconColors={Medicine:'#0d7c66',Staff:'#1a3a5c',Prescription:'#9b59b6'};res.innerHTML=all.map(item=>`<a href="${item.url}" class="search-result-item"><div class="search-result-icon" style="background:${colors[item.type]||'#eee'};color:${iconColors[item.type]||'#333'}"><i class="fa ${item.icon}"></i></div><div style="min-width:0"><div class="search-result-title">${item.title}</div><div class="search-result-sub">${item.sub}</div></div><span class="search-result-type" style="background:${colors[item.type]};color:${iconColors[item.type]}">${item.type}</span></a>`).join('');res.classList.add('show');}
+// QR Code generator
+function generateQR(containerId, text){const el=document.getElementById(containerId);if(el&&typeof QRCode!=='undefined'){el.innerHTML='';new QRCode(el,{text:text,width:180,height:180,colorDark:'#1a3a5c',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});}}
+</script>
+</th:block>
+
+<nav th:fragment="admin-sidebar" class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="brand-icon">🏥</div><div class="brand-text"><div class="brand-name">Smart Hospital<br/>Pharmacy</div><div class="brand-sub">Admin Panel</div></div></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Main</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/dashboard}"><i class="fa fa-home"></i>Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/activities}"><i class="fa fa-history"></i>Admin Activities</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/audit-log}"><i class="fa fa-shield-alt"></i>Audit Log</a></li>
+    </ul></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Staff</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/staff/add}"><i class="fa fa-user-plus"></i>Add New Staff</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/staff}"><i class="fa fa-users"></i>Staff Details</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/locked-accounts}"><i class="fa fa-lock"></i>Locked Accounts</a></li>
+    </ul></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Medicines</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/medicines/add}"><i class="fa fa-plus-circle"></i>Add Medicine</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/medicines}"><i class="fa fa-pills"></i>Medicine Details</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/stock}"><i class="fa fa-exchange-alt"></i>Stock In / Out</a></li>
+    </ul></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Operations</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/prescriptions}"><i class="fa fa-file-prescription"></i>Prescriptions</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/purchase-orders}"><i class="fa fa-shopping-cart"></i>Purchase Orders</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/shift-handover}"><i class="fa fa-exchange-alt"></i>Shift Handover</a></li>
+    </ul></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">🆕 AI &amp; Smart Tools</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/interaction-checker}" style="color:rgba(155,89,182,0.9);"><i class="fa fa-brain"></i>Drug Comparison AI</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/smart-predictor}" style="color:rgba(52,152,219,0.9);"><i class="fa fa-chart-line"></i>Reorder Predictor</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/chat}" style="color:rgba(0,200,150,0.9);"><i class="fa fa-comments"></i>Staff Chat</a></li>
+    </ul></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Alerts</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/low-stock}"><i class="fa fa-exclamation-triangle"></i>Low Stock Alert<span class="nav-badge" th:if="${lowStockCount != null and lowStockCount > 0}" th:text="${lowStockCount}"></span></a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/expiry-alert}"><i class="fa fa-calendar-times"></i>Expiry Alert<span class="nav-badge warning" th:if="${expiringCount != null and expiringCount > 0}" th:text="${expiringCount}"></span></a></li>
+    </ul></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">More</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/reports}"><i class="fa fa-chart-bar"></i>Reports &amp; Analysis</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/feedback}"><i class="fa fa-comments"></i>Customer Feedback</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/logout}" style="color:rgba(231,76,60,0.8);"><i class="fa fa-sign-out-alt"></i>Logout</a></li>
+    </ul></div>
+</nav>
+
+<header th:fragment="admin-header(pageTitle)" class="main-header">
+    <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-sm d-lg-none" style="background:var(--light);border-radius:8px;" onclick="document.getElementById('sidebar').classList.toggle('show')"><i class="fa fa-bars"></i></button>
+        <div class="header-title" th:text="${pageTitle}">Dashboard</div>
+    </div>
+    <div class="d-none d-md-flex align-items-center" style="flex:1;max-width:300px;margin:0 24px;">
+        <div class="search-wrapper" style="width:100%;">
+            <i class="fa fa-search search-icon"></i>
+            <input type="text" class="search-input" id="globalSearch" placeholder="Search medicines, staff..." autocomplete="off"/>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
+    <div class="header-right">
+        <button class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</button>
+        <div class="dropdown">
+            <button class="notif-btn" data-bs-toggle="dropdown"><i class="fa fa-bell"></i>
+                <span class="notif-badge" th:if="${(lowStockCount + expiringCount) > 0}" th:text="${lowStockCount + expiringCount}"></span>
+            </button>
+            <div class="dropdown-menu notif-dropdown dropdown-menu-end">
+                <div class="notif-header"><span><i class="fa fa-bell me-2"></i>Notifications</span>
+                    <button onclick="fetch('/admin/notifications/mark-read',{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=_csrf]')?.content||''}}).then(()=>location.reload())" style="background:rgba(255,255,255,0.2);border:none;color:white;font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;">Mark all read</button>
+                </div>
+                <div th:if="${lowStockCount > 0}" class="notif-item">
+                    <div class="notif-item-icon" style="background:rgba(231,76,60,0.1);color:#e74c3c;"><i class="fa fa-exclamation"></i></div>
+                    <div><div class="notif-item-text" th:text="${lowStockCount} + ' medicines low on stock'"></div><div class="notif-item-sub">Below 10 units</div></div>
+                </div>
+                <div th:if="${expiringCount > 0}" class="notif-item">
+                    <div class="notif-item-icon" style="background:rgba(243,156,18,0.1);color:#f39c12;"><i class="fa fa-calendar-times"></i></div>
+                    <div><div class="notif-item-text" th:text="${expiringCount} + ' medicines expiring soon'"></div></div>
+                </div>
+                <div th:if="${lowStockCount == 0 and expiringCount == 0}" class="notif-item">
+                    <div class="notif-item-icon" style="background:rgba(39,174,96,0.1);color:#27ae60;"><i class="fa fa-check"></i></div>
+                    <div><div class="notif-item-text">All clear — no alerts!</div></div>
+                </div>
+                <div style="padding:10px 18px;background:var(--card-bg);">
+                    <a th:href="@{/admin/low-stock}" style="font-size:12px;color:var(--secondary);text-decoration:none;">View all alerts →</a>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <div class="d-none d-sm-block text-end"><div class="user-name">Administrator</div><div class="user-role">Admin</div></div>
+            <div class="dropdown"><div class="user-avatar" data-bs-toggle="dropdown">A</div>
+                <ul class="dropdown-menu dropdown-menu-end" style="border:none;box-shadow:0 8px 30px rgba(0,0,0,0.12);border-radius:12px;min-width:160px;">
+                    <li><a class="dropdown-item" th:href="@{/admin/audit-log}" style="font-size:14px;"><i class="fa fa-shield-alt me-2"></i>Audit Log</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" th:href="@{/logout}" style="font-size:14px;color:#e74c3c;"><i class="fa fa-sign-out-alt me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>
+
+<nav th:fragment="staff-sidebar" class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="brand-icon">🏥</div><div class="brand-text"><div class="brand-name">Smart Hospital<br/>Pharmacy</div><div class="brand-sub">Staff Panel</div></div></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Main</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/dashboard}"><i class="fa fa-home"></i>Dashboard</a></li>
+    </ul></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Medicines</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/medicines/add}"><i class="fa fa-plus-circle"></i>Add Medicine</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/medicines}"><i class="fa fa-pills"></i>Medicine Details</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/stock}"><i class="fa fa-exchange-alt"></i>Stock In / Out</a></li>
+    </ul></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Operations</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/prescriptions}"><i class="fa fa-file-prescription"></i>Prescriptions</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/purchase-orders}"><i class="fa fa-shopping-cart"></i>Purchase Orders</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/shift-handover}"><i class="fa fa-exchange-alt"></i>Shift Handover</a></li>
+    </ul></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">🆕 Smart Tools</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/interaction-checker}" style="color:rgba(155,89,182,0.9);"><i class="fa fa-brain"></i>Drug Comparison AI</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/smart-predictor}" style="color:rgba(52,152,219,0.9);"><i class="fa fa-chart-line"></i>Reorder Predictor</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/chat}" style="color:rgba(0,200,150,0.9);"><i class="fa fa-comments"></i>Staff Chat</a></li>
+    </ul></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Alerts</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/low-stock}"><i class="fa fa-exclamation-triangle"></i>Low Stock<span class="nav-badge" th:if="${lowStockCount != null and lowStockCount > 0}" th:text="${lowStockCount}"></span></a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/expiry-alert}"><i class="fa fa-calendar-times"></i>Expiry Alert<span class="nav-badge warning" th:if="${expiringCount != null and expiringCount > 0}" th:text="${expiringCount}"></span></a></li>
+    </ul></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">More</div><ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/reports}"><i class="fa fa-chart-bar"></i>Reports &amp; Analysis</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/staff/feedback}"><i class="fa fa-comments"></i>Customer Feedback</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/logout}" style="color:rgba(231,76,60,0.8);"><i class="fa fa-sign-out-alt"></i>Logout</a></li>
+    </ul></div>
+</nav>
+
+<header th:fragment="staff-header(pageTitle)" class="main-header">
+    <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-sm d-lg-none" style="background:var(--light);border-radius:8px;" onclick="document.getElementById('sidebar').classList.toggle('show')"><i class="fa fa-bars"></i></button>
+        <div class="header-title" th:text="${pageTitle}">Dashboard</div>
+    </div>
+    <div class="header-right">
+        <button class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</button>
+        <div class="dropdown">
+            <button class="notif-btn" data-bs-toggle="dropdown"><i class="fa fa-bell"></i>
+                <span class="notif-badge" th:if="${(lowStockCount + expiringCount) > 0}" th:text="${lowStockCount + expiringCount}"></span>
+            </button>
+            <div class="dropdown-menu notif-dropdown dropdown-menu-end">
+                <div class="notif-header"><i class="fa fa-bell me-2"></i>Notifications</div>
+                <div th:if="${lowStockCount > 0}" class="notif-item"><div class="notif-item-icon" style="background:rgba(231,76,60,0.1);color:#e74c3c;"><i class="fa fa-exclamation"></i></div><div><div class="notif-item-text" th:text="${lowStockCount} + ' medicines low on stock'"></div></div></div>
+                <div th:if="${expiringCount > 0}" class="notif-item"><div class="notif-item-icon" style="background:rgba(243,156,18,0.1);color:#f39c12;"><i class="fa fa-calendar-times"></i></div><div><div class="notif-item-text" th:text="${expiringCount} + ' medicines expiring soon'"></div></div></div>
+                <div th:if="${lowStockCount == 0 and expiringCount == 0}" class="notif-item"><div class="notif-item-icon" style="background:rgba(39,174,96,0.1);color:#27ae60;"><i class="fa fa-check"></i></div><div><div class="notif-item-text">No alerts!</div></div></div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <div class="d-none d-sm-block text-end"><div class="user-name" th:text="${staff?.staffName ?: 'Staff'}">Staff</div><div class="user-role">Staff Member</div></div>
+            <div class="dropdown"><div class="user-avatar" data-bs-toggle="dropdown" th:text="${staff?.staffName != null ? staff.staffName.substring(0,1).toUpperCase() : 'S'}">S</div>
+                <ul class="dropdown-menu dropdown-menu-end" style="border:none;box-shadow:0 8px 30px rgba(0,0,0,0.12);border-radius:12px;">
+                    <li><a class="dropdown-item" th:href="@{/logout}" style="font-size:14px;color:#e74c3c;"><i class="fa fa-sign-out-alt me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>
+
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/><title>Staff Chat - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+    <style>
+        .chat-container{height:calc(100vh - 280px);min-height:400px;display:flex;flex-direction:column;}
+        .chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--bg);}
+        .message-bubble{max-width:70%;border-radius:16px;padding:10px 14px;font-size:14px;line-height:1.5;position:relative;}
+        .msg-admin{align-self:flex-end;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border-radius:16px 16px 4px 16px;}
+        .msg-staff{align-self:flex-start;background:var(--card-bg);color:var(--text);border-radius:16px 16px 16px 4px;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+        .msg-announcement{align-self:center;background:linear-gradient(135deg,#f39c12,#e67e22);color:white;border-radius:12px;text-align:center;max-width:85%;}
+        .msg-meta{font-size:10px;opacity:0.65;margin-top:3px;}
+        .chat-input-area{padding:12px 16px;background:var(--card-bg);border-top:1px solid var(--border);}
+        .send-btn{background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;color:white;width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;}
+        .send-btn:hover{transform:scale(1.05);}
+        .online-indicator{width:10px;height:10px;background:#27ae60;border-radius:50%;display:inline-block;animation:blink 1.5s infinite;}
+        @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+        .avatar-admin{background:linear-gradient(135deg,#1a3a5c,#0d7c66);}
+        .avatar-staff{background:linear-gradient(135deg,#9b59b6,#6c3483);}
+    </style>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Staff Chat')}"></th:block>
+<main class="main-content"><div class="content-area">
+
+    <div class="page-header d-flex align-items-center justify-content-between">
+        <div>
+            <h2><i class="fa fa-comments me-2" style="color:#00c896;"></i>Real-Time Staff Chat
+                <span class="online-indicator ms-2"></span>
+            </h2>
+            <p>Live messaging between admin and all pharmacy staff</p>
+        </div>
+        <button class="btn btn-outline-primary btn-sm" onclick="sendAnnouncement()"><i class="fa fa-bullhorn me-1"></i>Broadcast Announcement</button>
+    </div>
+
+    <div class="table-card chat-container">
+        <div class="chat-messages" id="chatMessages">
+            <div th:each="msg : ${messages}" th:class="'d-flex align-items-end gap-2 ' + (${msg.senderRole == 'ADMIN'} ? 'flex-row-reverse' : 'flex-row')">
+                <div class="user-avatar" style="width:32px;height:32px;font-size:12px;flex-shrink:0;"
+                     th:classappend="${msg.senderRole == 'ADMIN'} ? 'avatar-admin' : 'avatar-staff'"
+                     th:text="${msg.senderName.substring(0,1).toUpperCase()}"></div>
+                <div th:class="'message-bubble ' + (${msg.announcement} ? 'msg-announcement' : (${msg.senderRole == 'ADMIN'} ? 'msg-admin' : 'msg-staff'))">
+                    <div th:if="${msg.announcement}" class="fw-700 mb-1">📢 ANNOUNCEMENT</div>
+                    <div th:text="${msg.message}"></div>
+                    <div class="msg-meta" th:text="${msg.senderName} + ' · ' + (${msg.sentAt != null ? #temporals.format(msg.sentAt,'HH:mm') : ''})"></div>
+                </div>
+            </div>
+            <div id="chatEnd"></div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="d-flex gap-2 align-items-center">
+                <input type="text" class="form-control" id="msgInput" placeholder="Type a message to all staff..." maxlength="1000"
+                       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"/>
+                <button class="send-btn" onclick="sendMessage()" title="Send"><i class="fa fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+</div></main>
+
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+<script>
+initSearch('/admin/search');
+
+// Scroll to bottom
+function scrollToBottom(){ document.getElementById('chatEnd').scrollIntoView({behavior:'smooth'}); }
+scrollToBottom();
+
+// SSE for real-time messages
+const evtSource = new EventSource('/chat/subscribe');
+evtSource.addEventListener('message', function(e) {
+    try {
+        const data = JSON.parse(e.data);
+        appendMessage(data);
+        scrollToBottom();
+    } catch(err) {}
+});
+
+function appendMessage(data) {
+    const isAdmin = data.role === 'ADMIN';
+    const isAnnouncement = data.announcement;
+    const container = document.getElementById('chatMessages');
+    const endEl = document.getElementById('chatEnd');
+    const initial = data.sender ? data.sender.charAt(0).toUpperCase() : '?';
+    const time = data.time ? data.time.substring(11,16) : '';
+    const row = document.createElement('div');
+    row.className = `d-flex align-items-end gap-2 ${isAdmin ? 'flex-row-reverse' : 'flex-row'}`;
+    row.innerHTML = `
+        <div class="user-avatar ${isAdmin ? 'avatar-admin' : 'avatar-staff'}" style="width:32px;height:32px;font-size:12px;flex-shrink:0;">${initial}</div>
+        <div class="message-bubble ${isAnnouncement ? 'msg-announcement' : (isAdmin ? 'msg-admin' : 'msg-staff')}">
+            ${isAnnouncement ? '<div class="fw-700 mb-1">📢 ANNOUNCEMENT</div>' : ''}
+            <div>${escHtml(data.message)}</div>
+            <div class="msg-meta">${escHtml(data.sender)} · ${time}</div>
+        </div>`;
+    container.insertBefore(row, endEl);
+}
+
+function escHtml(t) {
+    return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function sendMessage() {
+    const inp = document.getElementById('msgInput');
+    const msg = inp.value.trim();
+    if (!msg) return;
+    inp.value = '';
+    fetch('/admin/chat/send', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `message=${encodeURIComponent(msg)}&announcement=false`
+    });
+}
+
+function sendAnnouncement() {
+    const msg = prompt('Enter broadcast announcement to all staff:');
+    if (!msg || !msg.trim()) return;
+    fetch('/admin/chat/send', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `message=${encodeURIComponent(msg)}&announcement=true`
+    });
+}
+</script>
+</body>
+</html>

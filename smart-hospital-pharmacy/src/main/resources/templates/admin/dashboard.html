@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Admin Dashboard - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Admin Dashboard')}"></th:block>
+
+<main class="main-content">
+<div class="content-area">
+    <!-- Flash Messages -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show mb-3">
+        <i class="fa fa-check-circle me-2"></i><span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mb-3">
+        <i class="fa fa-exclamation-circle me-2"></i><span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header d-flex align-items-center justify-content-between">
+        <div>
+            <h2><i class="fa fa-tachometer-alt me-2" style="color:var(--secondary);"></i>Admin Dashboard</h2>
+            <p>Welcome back! Here's what's happening in your pharmacy.</p>
+        </div>
+        <div class="text-muted" style="font-size:13px;">
+            <i class="fa fa-calendar me-1"></i>
+            <span id="currentDate"></span>
+        </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="stat-icon" style="background:rgba(26,58,92,0.1);color:var(--primary);">
+                        <i class="fa fa-pills"></i>
+                    </div>
+                    <span class="badge-info">Total</span>
+                </div>
+                <div class="stat-num" th:text="${totalMedicines}">0</div>
+                <div class="stat-label">Total Medicines</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="stat-icon" style="background:rgba(39,174,96,0.1);color:#27ae60;">
+                        <i class="fa fa-users"></i>
+                    </div>
+                    <span class="badge-success">Active</span>
+                </div>
+                <div class="stat-num" th:text="${totalStaff}">0</div>
+                <div class="stat-label">Total Staff</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="stat-icon" style="background:rgba(231,76,60,0.1);color:#e74c3c;">
+                        <i class="fa fa-exclamation-triangle"></i>
+                    </div>
+                    <span class="badge-danger">Alert</span>
+                </div>
+                <div class="stat-num" th:text="${lowStockCount}">0</div>
+                <div class="stat-label">Low Stock Items</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="stat-icon" style="background:rgba(243,156,18,0.1);color:#f39c12;">
+                        <i class="fa fa-calendar-times"></i>
+                    </div>
+                    <span class="badge-warning">Warning</span>
+                </div>
+                <div class="stat-num" th:text="${expiringCount}">0</div>
+                <div class="stat-label">Expiring Soon</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Recent Transactions -->
+        <div class="col-lg-7">
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title"><i class="fa fa-exchange-alt me-2" style="color:var(--secondary);"></i>Recent Transactions</div>
+                    <a th:href="@{/admin/stock}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Medicine</th>
+                                <th>Type</th>
+                                <th>Qty</th>
+                                <th>By</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="tx : ${recentTransactions}">
+                                <td th:text="${tx.medicine.productName}">-</td>
+                                <td>
+                                    <span th:if="${tx.transactionType.name() == 'STOCK_IN'}" class="badge-success">
+                                        <i class="fa fa-arrow-up me-1"></i>IN
+                                    </span>
+                                    <span th:if="${tx.transactionType.name() == 'STOCK_OUT'}" class="badge-danger">
+                                        <i class="fa fa-arrow-down me-1"></i>OUT
+                                    </span>
+                                </td>
+                                <td th:text="${tx.quantity}">0</td>
+                                <td>
+                                    <span th:if="${tx.performedByAdmin}" class="badge-info">Admin</span>
+                                    <span th:unless="${tx.performedByAdmin}" class="badge-warning" th:text="${tx.performedByStaff?.staffName ?: 'Staff'}">Staff</span>
+                                </td>
+                                <td th:text="${#temporals.format(tx.transactionDate, 'dd/MM HH:mm')}" style="font-size:12px;color:#999;">-</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recentTransactions)}">
+                                <td colspan="5" class="text-center py-4" style="color:#ccc;">No transactions yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Panel -->
+        <div class="col-lg-5">
+            <!-- Low Stock Alert -->
+            <div class="table-card mb-3">
+                <div class="table-header">
+                    <div class="table-title" style="color:#e74c3c;"><i class="fa fa-exclamation-triangle me-2"></i>Low Stock Alerts</div>
+                    <a th:href="@{/admin/low-stock}" class="btn btn-sm" style="background:rgba(231,76,60,0.1);color:#e74c3c;border-radius:8px;font-size:12px;font-weight:600;">View All</a>
+                </div>
+                <div class="p-3">
+                    <div th:each="m : ${lowStockMedicines}" class="d-flex justify-content-between align-items-center mb-2 p-2" style="background:#fff5f5;border-radius:8px;">
+                        <div style="font-size:13px;font-weight:600;" th:text="${m.productName}">Med</div>
+                        <div class="badge-danger" th:text="${m.stockQuantity} + ' units'">0</div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(lowStockMedicines)}" class="text-center py-3" style="color:#ccc;font-size:13px;">
+                        <i class="fa fa-check-circle me-1" style="color:#27ae60;"></i>All stocks are sufficient
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expiry Alert -->
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title" style="color:#f39c12;"><i class="fa fa-calendar-times me-2"></i>Expiry Alerts</div>
+                    <a th:href="@{/admin/expiry-alert}" class="btn btn-sm" style="background:rgba(243,156,18,0.1);color:#f39c12;border-radius:8px;font-size:12px;font-weight:600;">View All</a>
+                </div>
+                <div class="p-3">
+                    <div th:each="m : ${expiringMedicines}" class="d-flex justify-content-between align-items-center mb-2 p-2" style="background:#fffbf0;border-radius:8px;">
+                        <div style="font-size:13px;font-weight:600;" th:text="${m.productName}">Med</div>
+                        <div class="badge-warning" th:text="${#temporals.format(m.expiryDate, 'dd/MM/yyyy')}">-</div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(expiringMedicines)}" class="text-center py-3" style="color:#ccc;font-size:13px;">
+                        <i class="fa fa-check-circle me-1" style="color:#27ae60;"></i>No medicines expiring soon
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+<script>
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+</script>
+</body>
+</html>

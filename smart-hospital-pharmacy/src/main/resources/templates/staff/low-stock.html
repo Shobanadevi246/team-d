@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/><title>Low Stock - Staff Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: staff-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: staff-header('Low Stock Alert')}"></th:block>
+<main class="main-content"><div class="content-area">
+    <div class="page-header"><h2><i class="fa fa-exclamation-triangle me-2" style="color:#e74c3c;"></i>Low Stock Alert</h2><p>Medicines with less than 10 units</p></div>
+    <div class="table-card">
+        <div class="table-header"><div class="table-title" style="color:#e74c3c;"><i class="fa fa-exclamation-circle me-2"></i>Low Stock Medicines</div><span class="badge-danger" th:text="${medicines?.size() ?: 0} + ' critical'"></span></div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>#</th><th>Image</th><th>Product Name</th><th>SKU</th><th>Stock</th><th>Expiry</th><th>Action</th></tr></thead>
+                <tbody>
+                <tr th:if="${medicines == null or medicines.isEmpty()}"><td colspan="7" class="text-center py-5"><i class="fa fa-check-circle fa-2x text-success mb-2 d-block"></i><span class="text-muted">All medicines are well stocked!</span></td></tr>
+                <tr th:each="med, i : ${medicines}" style="background:rgba(231,76,60,0.03);">
+                    <td th:text="${i.count}"></td>
+                    <td><img th:if="${med.imagePath != null}" th:src="@{'/uploads/medicines/' + ${med.imagePath}}" style="width:38px;height:38px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'"/><div th:if="${med.imagePath == null}" class="stat-icon" style="width:38px;height:38px;background:rgba(231,76,60,0.1);color:#e74c3c;font-size:14px;border-radius:8px;"><i class="fa fa-pills"></i></div></td>
+                    <td class="fw-600" th:text="${med.productName}"></td>
+                    <td><code th:text="${med.skuId}"></code></td>
+                    <td><span class="badge-danger fw-bold" th:text="${med.stockQuantity} + ' units'"></span></td>
+                    <td th:text="${med.expiryDate != null ? #temporals.format(med.expiryDate, 'dd MMM yyyy') : 'N/A'}"></td>
+                    <td><a th:href="@{/staff/stock}" class="btn btn-primary btn-sm"><i class="fa fa-arrow-down me-1"></i>Stock In</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div></main>
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+</body>
+</html>

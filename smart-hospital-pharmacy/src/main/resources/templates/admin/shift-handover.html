@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/><title>Shift Handover - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+    <style>
+        .ai-badge{background:linear-gradient(135deg,#9b59b6,#6c3483);color:white;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;}
+        .status-PENDING{color:#f39c12;font-weight:700;}
+        .status-ACKNOWLEDGED{color:#27ae60;font-weight:700;}
+        .status-ESCALATED{color:#e74c3c;font-weight:700;}
+        .ai-summary{background:linear-gradient(135deg,rgba(155,89,182,0.08),rgba(52,152,219,0.08));border-left:3px solid #9b59b6;border-radius:0 10px 10px 0;padding:12px 16px;font-size:13px;line-height:1.7;font-style:italic;}
+    </style>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Shift Handover System')}"></th:block>
+<main class="main-content"><div class="content-area">
+
+    <div class="page-header">
+        <h2><i class="fa fa-exchange-alt me-2" style="color:var(--secondary);"></i>Shift Handover System
+            <span class="ai-badge ms-2">AI SUMMARISED</span>
+        </h2>
+        <p>View all shift handovers with AI-generated summaries — current pharmacy status snapshot</p>
+    </div>
+
+    <!-- Current Status -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-icon mx-auto mb-2" style="background:rgba(231,76,60,0.1);color:#e74c3c;"><i class="fa fa-exclamation-triangle"></i></div>
+                <div class="stat-num" th:text="${lowStockCount}">0</div>
+                <div class="stat-label">Low Stock Now</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-icon mx-auto mb-2" style="background:rgba(243,156,18,0.1);color:#f39c12;"><i class="fa fa-calendar-times"></i></div>
+                <div class="stat-num" th:text="${expiringCount}">0</div>
+                <div class="stat-label">Expiring Soon</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-icon mx-auto mb-2" style="background:rgba(52,152,219,0.1);color:#3498db;"><i class="fa fa-users"></i></div>
+                <div class="stat-num" th:text="${staffList?.size() ?: 0}">0</div>
+                <div class="stat-label">Total Staff</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-icon mx-auto mb-2" style="background:rgba(155,89,182,0.1);color:#9b59b6;"><i class="fa fa-file-alt"></i></div>
+                <div class="stat-num" th:text="${handovers?.size() ?: 0}">0</div>
+                <div class="stat-label">Total Handovers</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Handover List -->
+    <div class="table-card">
+        <div class="table-header">
+            <div class="table-title"><i class="fa fa-history me-2"></i>All Shift Handovers</div>
+        </div>
+        <div th:if="${handovers == null or handovers.isEmpty()}" class="text-center py-5 text-muted">
+            <i class="fa fa-exchange-alt fa-2x mb-2 d-block" style="opacity:0.3;"></i>No shift handovers yet. Staff can submit them from their panel.
+        </div>
+        <div th:each="h : ${handovers}" class="p-4 border-bottom">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex gap-3 align-items-center">
+                    <div class="stat-icon" style="background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-size:14px;width:42px;height:42px;border-radius:10px;flex-shrink:0;"><i class="fa fa-exchange-alt"></i></div>
+                    <div>
+                        <div class="fw-700"><span th:text="${h.outgoingStaff?.staffName ?: 'Admin'}"></span> → <span th:text="${h.incomingStaff?.staffName ?: 'Admin'}"></span></div>
+                        <div class="text-muted" style="font-size:12px;">
+                            <span class="badge-info" th:text="${h.shiftType}"></span>
+                            &nbsp;| <span th:text="${h.createdAt != null ? #temporals.format(h.createdAt,'dd MMM yyyy HH:mm') : 'N/A'}"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <span th:class="'status-' + ${h.status.name()}" th:text="${h.status.name()}"></span>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+                        Low Stock: <strong th:text="${h.lowStockCount}"></strong> | Expiring: <strong th:text="${h.expiringCount}"></strong>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${h.aiSummary != null and !h.aiSummary.isBlank()}" class="ai-summary mb-3">
+                <div style="font-size:10px;font-weight:700;color:#9b59b6;margin-bottom:6px;font-style:normal;"><i class="fa fa-robot me-1"></i>AI SUMMARY</div>
+                <span th:text="${h.aiSummary}"></span>
+            </div>
+
+            <div th:if="${h.handoverNotes != null and !h.handoverNotes.isBlank()}" class="mb-2 p-3" style="background:var(--light);border-radius:8px;font-size:13px;">
+                <strong>Staff Notes:</strong> <span th:text="${h.handoverNotes}"></span>
+            </div>
+
+            <div th:if="${h.criticalAlerts != null and !h.criticalAlerts.isBlank()}" class="mb-2 p-3 alert-warning" style="border-radius:8px;font-size:12px;">
+                <strong>⚠️ Alerts at time of handover:</strong><br/>
+                <pre style="margin:0;font-family:inherit;white-space:pre-wrap;" th:text="${h.criticalAlerts}"></pre>
+            </div>
+        </div>
+    </div>
+
+</div></main>
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+<script>initSearch('/admin/search');</script>
+</body>
+</html>

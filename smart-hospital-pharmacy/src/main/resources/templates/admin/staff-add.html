@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/><title>Add Staff</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Add New Staff')}"></th:block>
+<main class="main-content"><div class="content-area">
+<div class="page-header"><h2><i class="fa fa-user-plus me-2" style="color:var(--secondary);"></i>Add New Staff</h2><p>Register a new pharmacy staff member</p></div>
+<div th:if="${error}" class="alert alert-danger alert-dismissible fade show"><i class="fa fa-exclamation-circle me-2"></i><span th:text="${error}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+<div class="row justify-content-center"><div class="col-lg-7">
+<div class="table-card p-4">
+<form th:action="@{/admin/staff/add}" method="post" onsubmit="return validateForm()">
+<div class="row g-3">
+<div class="col-md-6"><label class="form-label">Staff Name *</label><div class="input-group"><span class="input-group-text"><i class="fa fa-user"></i></span><input type="text" name="staffName" class="form-control" placeholder="Full name" required/></div></div>
+<div class="col-md-6"><label class="form-label">Staff ID *</label><div class="input-group"><span class="input-group-text"><i class="fa fa-id-card"></i></span><input type="text" name="staffId" class="form-control" placeholder="e.g. STF001" required/></div></div>
+<div class="col-12"><label class="form-label">Email Address *</label><div class="input-group"><span class="input-group-text"><i class="fa fa-envelope"></i></span><input type="email" name="email" class="form-control" placeholder="staff@hospital.com" required/></div></div>
+<div class="col-md-6"><label class="form-label">Shop Number *</label><div class="input-group"><span class="input-group-text"><i class="fa fa-store"></i></span><input type="text" name="shopNumber" class="form-control" placeholder="e.g. 101" required/></div></div>
+<div class="col-md-6"><label class="form-label">Shop Block Name *</label><div class="input-group"><span class="input-group-text"><i class="fa fa-building"></i></span><input type="text" name="shopBlockName" class="form-control" placeholder="e.g. Block A" required/></div></div>
+<div class="col-12"><label class="form-label">Password *</label>
+<div class="input-group"><span class="input-group-text"><i class="fa fa-lock"></i></span><input type="password" name="password" id="pw" class="form-control" placeholder="Min 8 chars: uppercase, number, special char" required oninput="checkPw(this.value)"/><button type="button" class="btn btn-outline-secondary" onclick="togglePw()"><i class="fa fa-eye" id="eyeIcon"></i></button></div>
+<div class="mt-2 p-2" style="background:#f8f9fa;border-radius:8px;">
+<div id="r1" style="font-size:12px;color:#e74c3c;"><i class="fa fa-times me-1"></i>At least 8 characters</div>
+<div id="r2" style="font-size:12px;color:#e74c3c;"><i class="fa fa-times me-1"></i>At least 1 uppercase</div>
+<div id="r3" style="font-size:12px;color:#e74c3c;"><i class="fa fa-times me-1"></i>At least 1 number</div>
+<div id="r4" style="font-size:12px;color:#e74c3c;"><i class="fa fa-times me-1"></i>At least 1 special character</div>
+</div></div>
+<div class="col-12 d-flex gap-2 pt-2">
+<button type="submit" class="btn btn-primary"><i class="fa fa-save me-2"></i>Register Staff</button>
+<a th:href="@{/admin/staff}" class="btn btn-outline-secondary">Cancel</a>
+</div>
+</div>
+</form>
+</div>
+</div></div>
+</div></main>
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+<script>
+function checkPw(v){const rules=[v.length>=8,/[A-Z]/.test(v),/[0-9]/.test(v),/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v)];['r1','r2','r3','r4'].forEach((id,i)=>{const el=document.getElementById(id);el.style.color=rules[i]?'#27ae60':'#e74c3c';el.querySelector('i').className='fa me-1 '+(rules[i]?'fa-check':'fa-times');});}
+function togglePw(){const el=document.getElementById('pw');el.type=el.type==='password'?'text':'password';document.getElementById('eyeIcon').className='fa '+(el.type==='text'?'fa-eye-slash':'fa-eye');}
+function validateForm(){const pw=document.getElementById('pw').value;if(!/^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,}$/.test(pw)){alert('Password must have uppercase, number and special character (min 8)');return false;}return true;}
+</script>
+</body></html>

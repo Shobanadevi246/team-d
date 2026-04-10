@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/><title>Reorder Predictor - Staff Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+    <style>
+        .urgency-CRITICAL{border-left:4px solid #e74c3c;background:rgba(231,76,60,0.05);}
+        .urgency-HIGH{border-left:4px solid #f39c12;background:rgba(243,156,18,0.05);}
+        .urgency-MEDIUM{border-left:4px solid #3498db;background:rgba(52,152,219,0.05);}
+        .urgency-LOW{border-left:4px solid #27ae60;background:rgba(39,174,96,0.05);}
+        .urgency-SUFFICIENT{border-left:4px solid #ccc;background:var(--light);}
+        .trend-INCREASING{color:#e74c3c;}.trend-DECREASING{color:#27ae60;}.trend-STABLE{color:#888;}
+    </style>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: staff-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: staff-header('Smart Reorder Predictor')}"></th:block>
+<main class="main-content"><div class="content-area">
+    <div class="page-header">
+        <h2><i class="fa fa-chart-line me-2" style="color:#3498db;"></i>Smart Reorder Predictor</h2>
+        <p>AI-powered stockout predictions based on your pharmacy consumption patterns</p>
+    </div>
+    <div class="table-card">
+        <div class="table-header"><div class="table-title"><i class="fa fa-list me-2"></i>Predicted Reorder Schedule</div>
+            <span class="badge-info" th:text="${predictions?.size() ?: 0} + ' medicines'"></span></div>
+        <div class="p-3">
+            <div th:if="${predictions == null or predictions.isEmpty()}" class="text-center py-5 text-muted">
+                <i class="fa fa-chart-line fa-2x mb-3 d-block" style="opacity:0.3;"></i>No stock transaction data yet.
+            </div>
+            <div th:each="pred : ${predictions}" class="p-3 mb-3 rounded-3"
+                 th:classappend="'urgency-' + ${pred.get('urgency')}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <div class="fw-700" style="font-size:14px;" th:text="${pred.get('medicineName')}"></div>
+                        <code style="font-size:11px;" th:text="${pred.get('skuId')}"></code>
+                    </div>
+                    <div>
+                        <span class="badge-danger" th:if="${pred.get('urgency') == 'CRITICAL'}">⚠️ CRITICAL</span>
+                        <span class="badge-warning" th:if="${pred.get('urgency') == 'HIGH'}">🔶 HIGH</span>
+                        <span class="badge-info" th:if="${pred.get('urgency') == 'MEDIUM'}">🔵 MEDIUM</span>
+                        <span class="badge-success" th:if="${pred.get('urgency') == 'LOW'}">✅ LOW</span>
+                        <span class="badge-info" th:if="${pred.get('urgency') == 'SUFFICIENT'}" style="background:rgba(150,150,150,0.1);color:#888;">SUFFICIENT</span>
+                    </div>
+                </div>
+                <div class="row g-2 mb-1" style="font-size:12px;">
+                    <div class="col-4"><div class="text-muted">Current Stock</div><div class="fw-600" th:text="${pred.get('currentStock')} + ' units'"></div></div>
+                    <div class="col-4"><div class="text-muted">Daily Usage</div><div class="fw-600" th:text="${pred.get('dailyConsumptionRate')} + '/day'"></div></div>
+                    <div class="col-4"><div class="text-muted">Days Left</div><div class="fw-600" th:text="${pred.get('daysUntilStockout')} + ' days'"></div></div>
+                </div>
+                <div class="d-flex justify-content-between" style="font-size:12px;">
+                    <span class="text-muted">Stockout predicted: <strong th:text="${pred.get('predictedStockoutDate')}"></strong></span>
+                    <strong style="color:#9b59b6;">Suggest reorder: <span th:text="${pred.get('suggestedReorderQty')} + ' units'"></span></strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div></main>
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+</body>
+</html>

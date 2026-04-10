@@ -1,0 +1,11 @@
+target/
+*.class
+*.jar
+*.war
+.idea/
+*.iml
+.DS_Store
+uploads/medicines/*.jpg
+uploads/medicines/*.png
+uploads/medicines/*.webp
+!uploads/medicines/.gitkeep

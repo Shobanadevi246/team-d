@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/><title>Drug Comparison AI - Smart Hospital Pharmacy</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <th:block th:replace="~{fragments/layout :: layout-styles}"></th:block>
+    <style>
+        .severity-SAFE{background:rgba(39,174,96,0.12);border-left:4px solid #27ae60;color:#155724;}
+        .severity-MINOR{background:rgba(52,152,219,0.12);border-left:4px solid #3498db;color:#0c5460;}
+        .severity-MODERATE{background:rgba(243,156,18,0.12);border-left:4px solid #f39c12;color:#856404;}
+        .severity-MAJOR{background:rgba(231,76,60,0.12);border-left:4px solid #e74c3c;color:#721c24;}
+        .severity-CONTRAINDICATED{background:rgba(120,0,0,0.12);border-left:4px solid #800000;color:#4a0000;}
+        .severity-UNKNOWN{background:rgba(150,150,150,0.12);border-left:4px solid #aaa;color:#555;}
+        .result-card{border-radius:14px;padding:20px;transition:all 0.3s;display:none;}
+        .result-card.show{display:block;animation:fadeIn 0.4s ease;}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .ai-badge{background:linear-gradient(135deg,#9b59b6,#6c3483);color:white;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:1px;}
+        .result-line{padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.06);font-size:14px;line-height:1.6;}
+        .result-line:last-child{border-bottom:none;}
+        .severity-badge{font-size:12px;font-weight:700;padding:5px 14px;border-radius:8px;}
+        .sev-SAFE{background:#27ae60;color:white;}
+        .sev-MINOR{background:#3498db;color:white;}
+        .sev-MODERATE{background:#f39c12;color:white;}
+        .sev-MAJOR{background:#e74c3c;color:white;}
+        .sev-CONTRAINDICATED{background:#800000;color:white;}
+        .sev-UNKNOWN{background:#888;color:white;}
+        .loading-spinner{display:none;text-align:center;padding:30px;}
+        .medicine-input-group{position:relative;}
+        .vs-badge{background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-weight:800;font-size:14px;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;}
+    </style>
+</head>
+<body>
+<th:block th:replace="~{fragments/layout :: admin-sidebar}"></th:block>
+<th:block th:replace="~{fragments/layout :: admin-header('Drug Comparison AI Checker')}"></th:block>
+<main class="main-content"><div class="content-area">
+
+    <div class="page-header">
+        <h2><i class="fa fa-brain me-2" style="color:#9b59b6;"></i>AI Drug Comparison Checker
+            <span class="ai-badge ms-2">AI POWERED</span>
+        </h2>
+        <p>Compare two medicines, check safety, and see age suitability guidance</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="table-card p-4">
+                <h6 style="font-weight:700;color:var(--primary);margin-bottom:20px;"><i class="fa fa-flask me-2"></i>Compare Two Medicines</h6>
+
+                <div class="mb-3">
+                    <label class="form-label">First Medicine <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="med1Input" placeholder="e.g. Warfarin, Aspirin, Metformin..." list="medList1"/>
+                    <datalist id="medList1">
+                        <option th:each="m : ${medicines}" th:value="${m.productName}"></option>
+                    </datalist>
+                </div>
+
+                <div class="d-flex justify-content-center my-2">
+                    <div class="vs-badge">VS</div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Second Medicine <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="med2Input" placeholder="e.g. Ibuprofen, Amoxicillin..." list="medList2"/>
+                    <datalist id="medList2">
+                        <option th:each="m : ${medicines}" th:value="${m.productName}"></option>
+                    </datalist>
+                </div>
+
+                <button class="btn btn-primary w-100" id="checkBtn" onclick="checkInteraction()">
+                    <i class="fa fa-brain me-2"></i>Compare Medicines
+                </button>
+
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner-border" style="color:#9b59b6;" role="status"></div>
+                    <p class="mt-2 text-muted" style="font-size:13px;">AI is comparing medicine safety...</p>
+                </div>
+
+                <div id="resultCard" class="result-card mt-4"></div>
+
+                <div class="mt-4 p-3" style="background:var(--light);border-radius:10px;">
+                    <p style="font-size:12px;color:var(--text-muted);margin:0;"><i class="fa fa-info-circle me-1"></i>
+                        <strong>Disclaimer:</strong> Safety and age guidance are general only. Always confirm final medicine choice with a qualified doctor or pharmacist.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title"><i class="fa fa-history me-2"></i>Recent Medicine Comparisons</div>
+                    <span class="badge-purple" th:text="${recentChecks?.size() + ' checks'}">0</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead><tr><th>Medicine 1</th><th>Medicine 2</th><th>Severity</th><th>Checked By</th><th>Date</th></tr></thead>
+                        <tbody>
+                        <tr th:if="${recentChecks == null or recentChecks.isEmpty()}">
+                            <td colspan="5" class="text-center py-5 text-muted"><i class="fa fa-brain fa-2x mb-2 d-block" style="color:#9b59b6;opacity:0.3;"></i>No medicine comparisons yet.</td>
+                        </tr>
+                        <tr th:each="check : ${recentChecks}">
+                            <td class="fw-600" th:text="${check.medicine1}"></td>
+                            <td class="fw-600" th:text="${check.medicine2}"></td>
+                            <td>
+                                <span th:class="'severity-badge sev-' + ${check.severity.name()}" th:text="${check.severity.name()}"></span>
+                            </td>
+                            <td th:text="${check.checkedBy}"></td>
+                            <td style="font-size:12px;" th:text="${check.checkedAt != null ? #temporals.format(check.checkedAt,'dd MMM HH:mm') : 'N/A'}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Severity Guide -->
+            <div class="table-card mt-4 p-4">
+                <h6 style="font-weight:700;color:var(--primary);margin-bottom:16px;"><i class="fa fa-info-circle me-2"></i>Severity Level Guide</h6>
+                <div class="row g-2">
+                    <div class="col-md-4"><div class="severity-SAFE result-card show p-2 rounded"><strong>✅ SAFE</strong><br/><small>No significant interaction</small></div></div>
+                    <div class="col-md-4"><div class="severity-MINOR result-card show p-2 rounded"><strong>🔵 MINOR</strong><br/><small>Minimal clinical effect</small></div></div>
+                    <div class="col-md-4"><div class="severity-MODERATE result-card show p-2 rounded"><strong>🟡 MODERATE</strong><br/><small>Monitor closely</small></div></div>
+                    <div class="col-md-4"><div class="severity-MAJOR result-card show p-2 rounded"><strong>🔴 MAJOR</strong><br/><small>Avoid if possible</small></div></div>
+                    <div class="col-md-4"><div class="severity-CONTRAINDICATED result-card show p-2 rounded"><strong>⛔ CONTRAINDICATED</strong><br/><small>Do NOT combine</small></div></div>
+                    <div class="col-md-4"><div class="severity-UNKNOWN result-card show p-2 rounded"><strong>❓ UNKNOWN</strong><br/><small>Insufficient data</small></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div></main>
+
+<th:block th:replace="~{fragments/layout :: layout-scripts}"></th:block>
+<script>
+initSearch('/admin/search');
+
+function checkInteraction() {
+    const med1 = document.getElementById('med1Input').value.trim();
+    const med2 = document.getElementById('med2Input').value.trim();
+    if (!med1 || !med2) { alert('Please enter both medicine names.'); return; }
+
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('resultCard').classList.remove('show');
+    document.getElementById('checkBtn').disabled = true;
+
+    fetch('/admin/interaction-checker/check', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `medicine1=${encodeURIComponent(med1)}&medicine2=${encodeURIComponent(med2)}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('checkBtn').disabled = false;
+        if (data.success) {
+            renderResult(data);
+        } else {
+            document.getElementById('resultCard').innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+            document.getElementById('resultCard').classList.add('show');
+        }
+    })
+    .catch(e => {
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('checkBtn').disabled = false;
+        document.getElementById('resultCard').innerHTML = `<div class="alert alert-danger">Network error. Please try again.</div>`;
+        document.getElementById('resultCard').classList.add('show');
+    });
+}
+
+function renderResult(data) {
+    const severityColors = {
+        SAFE: '#27ae60', MINOR: '#3498db', MODERATE: '#f39c12',
+        MAJOR: '#e74c3c', CONTRAINDICATED: '#800000', UNKNOWN: '#888'
+    };
+    const severityIcons = {
+        SAFE: '✅', MINOR: '🔵', MODERATE: '🟡', MAJOR: '🔴', CONTRAINDICATED: '⛔', UNKNOWN: '❓'
+    };
+    const color = severityColors[data.severity] || '#888';
+    const icon = severityIcons[data.severity] || '❓';
+
+    let lines = data.result.split('\n').filter(l => l.trim());
+    let html = `
+        <div style="border-left:4px solid ${color};border-radius:12px;padding:16px;background:${color}15;">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <span style="font-size:13px;color:var(--text-muted);">${data.medicine1}</span>
+                    <strong style="color:var(--primary);margin:0 8px;">+</strong>
+                    <span style="font-size:13px;color:var(--text-muted);">${data.medicine2}</span>
+                </div>
+                <span class="severity-badge sev-${data.severity}">${icon} ${data.severity}</span>
+            </div>`;
+
+    lines.forEach(line => {
+        const colonIdx = line.indexOf(':');
+        if (colonIdx > 0 && colonIdx < 30) {
+            const label = line.substring(0, colonIdx);
+            const value = line.substring(colonIdx + 1).trim();
+            if (label !== 'SEVERITY') {
+                html += `<div class="result-line"><strong style="color:var(--primary);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">${label}:</strong> ${value}</div>`;
+            }
+        } else if (line.trim()) {
+            html += `<div class="result-line">${line}</div>`;
+        }
+    });
+
+    html += `<div class="mt-3 text-muted" style="font-size:11px;"><i class="fa fa-robot me-1"></i>Analysis powered by AI. Verify with clinical pharmacist.</div></div>`;
+
+    const card = document.getElementById('resultCard');
+    card.innerHTML = html;
+    card.classList.add('show');
+    location.reload(); // refresh history table
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') checkInteraction(); });
+</script>
+</body>
+</html>
